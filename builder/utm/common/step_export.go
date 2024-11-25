@@ -79,41 +79,24 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 		}
 	}
 
-	// Export the VM to an UTM file
+	// TODO: Make sure the outputPath is an absolute path and that the directory exists.
+	// Export via applescript POSIX only works with absolute paths.
 	outputPath := filepath.Join(s.OutputDir, s.OutputFilename+"."+s.Format)
 	ui.Say("Exporting virtual machine...")
 
-	// TODO: Actually export the VM when UTM API supports it
-	// Till then ask the user to manually export the VM
-	// using Share action in UTM VM in output Path
-	ui.Say("UTM API does not support exporting VMs yet.")
-	ui.Say("Please manually export the VM using 'Share...' action in UTM VM menu.")
-	ui.Say(fmt.Sprintf("Please make sure the VM is exported to the path %s ", outputPath))
-	ui.Say("The exported UTM file in the output directory will be passed as build Artifact.")
-	// ask user to input the path of the exported file
-	confirmOption, err := ui.Ask(
-		fmt.Sprintf("Confirm you have exported the VM to path [%s] [Y/n]:", outputPath))
-
-	if err != nil {
-		err := fmt.Errorf("error during export step: %s", err)
+	// Export the VM to an UTM file
+	if err := driver.Export(vmId, outputPath); err != nil {
+		err := fmt.Errorf("error exporting VM: %s", err)
 		state.Put("error", err)
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
 
-	if confirmOption == "Y" || confirmOption == "y" {
-		// Proceed with the next steps
-		ui.Say("Proceeding assuming the export is done...")
-		// We set export path as the output directory with UTM file.
-		// So it can be used as an artifact in the next steps.
-		state.Put("exportPath", outputPath)
+	// We set export path as the output directory with UTM file.
+	// So it can be used as an artifact in the next steps.
+	state.Put("exportPath", outputPath)
 
-		return multistep.ActionContinue
-	} else {
-		ui.Say("Export halted by user.")
-		return multistep.ActionHalt
-	}
-
+	return multistep.ActionContinue
 }
 
 func (s *StepExport) Cleanup(state multistep.StateBag) {}

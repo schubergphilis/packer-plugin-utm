@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os/exec"
 	"regexp"
 )
@@ -38,4 +39,25 @@ func (d *Utm46Driver) Import(name string, path string) (string, error) {
 	}
 
 	return "", fmt.Errorf("failed to import VM: %s", output)
+}
+
+// Export VM to UTM file
+func (d *Utm46Driver) Export(vmId string, path string) error {
+	var stdout bytes.Buffer
+
+	// Export VM
+	cmd := exec.Command(
+		"osascript", "-e",
+		fmt.Sprintf(`tell application "UTM" to export virtual machine id "%s" to POSIX file "%s"`, vmId, path),
+	)
+	// print command to log
+	log.Printf("Executing command: %s", cmd.String())
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	log.Printf("Export output: %s", stdout.String())
+
+	return nil
 }

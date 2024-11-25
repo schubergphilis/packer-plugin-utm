@@ -26,6 +26,9 @@ type Driver interface {
 	// Executes the given AppleScript with the given arguments.
 	ExecuteOsaScript(command ...string) (string, error)
 
+	// Export a VM to a UTM file
+	Export(string, string) error
+
 	// Import a VM
 	Import(string, string) (string, error)
 
