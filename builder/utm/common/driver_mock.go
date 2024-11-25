@@ -52,11 +52,11 @@ func (d *DriverMock) ExecuteOsaScript(command ...string) (string, error) {
 	return d.ExecuteOsaResult, nil
 }
 
-func (d *DriverMock) Import(name string, path string) error {
+func (d *DriverMock) Import(name string, path string) (string, error) {
 	d.ImportCalled = true
 	d.ImportName = name
 	d.ImportPath = path
-	return d.ImportErr
+	return "", d.ImportErr
 }
 
 func (d *DriverMock) IsRunning(name string) (bool, error) {

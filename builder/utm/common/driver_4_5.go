@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// Utm45Driver is the base type for UTM drivers
 type Utm45Driver struct {
 	// This is the path to the utmctl binary
 	UtmctlPath string
@@ -73,7 +74,8 @@ func (d *Utm45Driver) ExecuteOsaScript(command ...string) (string, error) {
 	return stdoutString, err
 }
 
-func (d *Utm45Driver) Import(name string, path string) error {
+// UTM 4.5 : We just create a VM shortcut using UTM open command.
+func (d *Utm45Driver) Import(name string, path string) (string, error) {
 	var stdout bytes.Buffer
 	// TODO: While importing we should have ability to set the name of the VM
 	// UTM does not support setting the name of the VM while importing
@@ -85,14 +87,14 @@ func (d *Utm45Driver) Import(name string, path string) error {
 	)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return err
+		return "", err
 	}
 	// "missing value" in the output means AppleScript was successful
 	// but not necessarily the VM was imported successfully
 	// UTM does not provide a way to check if the VM was imported successfully
 	// So we pray!
 	// The error appears in UI, but not through script
-	return nil
+	return "", nil
 }
 
 func (d *Utm45Driver) IsRunning(name string) (bool, error) {
@@ -165,6 +167,7 @@ func (d *Utm45Driver) Verify() error {
 	return nil
 }
 
+// Version reads the version of UTM that is installed.
 func (d *Utm45Driver) Version() (string, error) {
 	var stdout bytes.Buffer
 
