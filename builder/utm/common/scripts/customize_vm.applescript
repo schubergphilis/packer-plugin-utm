@@ -1,6 +1,7 @@
 on run argv
     tell application "UTM"
-        set vmName to item 1 of argv -- VM name is given as the first argument
+        set vmId to item 1 of argv -- VM id is given as the first argument
+        set vmName to ""
         set cpuCount to 0
         set memorySize to 0
         set vmNotes to ""
@@ -9,7 +10,9 @@ on run argv
         -- Parse arguments
         repeat with i from 2 to (count argv)
             set currentArg to item i of argv
-            if currentArg is "--cpus" then
+            if currentArg is "--name" then
+                set vmName to item (i + 1) of argv
+            else if currentArg is "--cpus" then
                 set cpuCount to item (i + 1) of argv
             else if currentArg is "--memory" then
                 set memorySize to item (i + 1) of argv
@@ -21,9 +24,14 @@ on run argv
         end repeat
         
         -- Get the VM and its configuration
-        set vm to virtual machine named vmName -- Name is assumed to be valid
+        set vm to virtual machine id vmId -- ID is assumed to be valid
         set config to configuration of vm
-
+        
+        -- Set VM name if provided
+        if vmName is not "" then
+            set name of config to vmName
+        end if
+        
         -- Set CPU count if provided
         if cpuCount is not 0 then
             set cpu cores of config to cpuCount

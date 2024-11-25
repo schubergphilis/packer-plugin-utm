@@ -1,17 +1,17 @@
 ---
 -- add_drive.applescript
 -- This script adds a drive to a specified UTM virtual machine with given size.
--- Usage: osascript add_drive.applescript <VM_NAME> --size <SIZE>
+-- Usage: osascript add_drive.applescript <VM_UUID> --size <SIZE>
 -- Example: osascript add_drive.applescript test --size 65536
 
 on run argv
-  set vmName to item 1 of argv # Name of the VM
+  set vmId to item 1 of argv # UUID of the VM
   -- Parse the --size argument
   set diskSize to item 3 of argv 
 
   tell application "UTM"
     -- Get the VM and its configuration
-    set vm to virtual machine named vmName -- Name is assumed to be valid
+    set vm to virtual machine id vmName -- Id is assumed to be valid
     set config to configuration of vm
 
     -- Existing drives

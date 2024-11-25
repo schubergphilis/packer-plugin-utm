@@ -33,7 +33,7 @@ type StepPortForwarding struct {
 func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
-	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 
 	if s.CommConfig.Type == "none" {
 		log.Printf("Not using a communicator, skipping setting up port forwarding...")
@@ -68,7 +68,7 @@ func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) 
 		// and 'Emulated VLAN' interface at index 0 and 1 respectively.
 		if s.ClearNetworkInterfaces {
 			// Make sure to clear the network interfaces and prepare for the new configuration
-			if _, err := driver.ExecuteOsaScript("clear_network_interfaces.applescript", vmName); err != nil {
+			if _, err := driver.ExecuteOsaScript("clear_network_interfaces.applescript", vmId); err != nil {
 				err := fmt.Errorf("error clearing network interfaces: %s", err)
 				state.Put("error", err)
 				ui.Error(err.Error())
@@ -81,7 +81,7 @@ func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) 
 			// but this should be configurable
 
 			// Add access to localhost => UTM 'Shared Network' interface
-			if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmName, "ShRd"); err != nil {
+			if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmId, "ShRd"); err != nil {
 				err := fmt.Errorf("error adding network interface: %s", err)
 				state.Put("error", err)
 				ui.Error(err.Error())
@@ -93,7 +93,7 @@ func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) 
 			// and then add if needed
 			// Make sure to configure the network interface to 'Emulated VLAN' mode
 			// required for port forwarding now in packer , later in vagrant
-			if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmName, "EmUd"); err != nil {
+			if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmId, "EmUd"); err != nil {
 				err := fmt.Errorf("error adding network interface: %s", err)
 				state.Put("error", err)
 				ui.Error(err.Error())
@@ -105,7 +105,7 @@ func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) 
 		// "tcp, 127.0.0.1, hostPort, guestPort"
 		ui.Say(fmt.Sprintf("Creating forwarded port mapping for communicator (SSH, WinRM, etc) (host port %d)", commHostPort))
 		command := []string{
-			"add_port_forwards.applescript", vmName,
+			"add_port_forwards.applescript", vmId,
 			"--index", "1",
 			fmt.Sprintf("TcPp,,%d,127.0.0.1,%d", guestPort, commHostPort),
 		}

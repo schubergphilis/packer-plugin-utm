@@ -35,7 +35,7 @@ func (s *StepAttachISOs) Run(ctx context.Context, state multistep.StateBag) mult
 	}
 
 	driver := state.Get("driver").(Driver)
-	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 
 	for diskCategory, isoPath := range diskMountMap {
 		// If it's a symlink, resolve it to its target.
@@ -56,7 +56,7 @@ func (s *StepAttachISOs) Run(ctx context.Context, state multistep.StateBag) mult
 
 		// Attach the ISO
 		command := []string{
-			"attach_iso.applescript", vmName,
+			"attach_iso.applescript", vmId,
 			"--iso", isoPath,
 		}
 		if _, err := driver.ExecuteOsaScript(command...); err != nil {

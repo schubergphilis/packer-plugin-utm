@@ -53,7 +53,7 @@ func TestStepImport_Cleanup(t *testing.T) {
 	state.Put("vm_path", "foo")
 
 	step := new(StepImport)
-	step.vmName = "bar"
+	step.vmId = "bar"
 
 	driver := state.Get("driver").(*utmcommon.DriverMock)
 

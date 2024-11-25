@@ -42,6 +42,7 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
 	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 	if s.OutputFilename == "" {
 		s.OutputFilename = vmName
 	}
@@ -67,7 +68,7 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 			return multistep.ActionHalt
 		}
 		command := []string{
-			"clear_port_forwards.applescript", vmName,
+			"clear_port_forwards.applescript", vmId,
 			"--index", "1", strconv.Itoa(commPortInt),
 		}
 		if _, err := driver.ExecuteOsaScript(command...); err != nil {

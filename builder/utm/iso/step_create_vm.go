@@ -3,6 +3,7 @@ package iso
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -17,6 +18,7 @@ import (
 //	vmName string - The name of the VM
 type stepCreateVM struct {
 	vmName string
+	vmId   string
 }
 
 func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -24,44 +26,60 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 	driver := state.Get("driver").(utmcommon.Driver)
 	ui := state.Get("ui").(packersdk.Ui)
 
-	name := config.VMName
-
+	vmName := config.VMName
 	isoPath := state.Get("iso_path").(string)
 
-	commands := [][]string{}
-	commands = append(commands, []string{
-		"create_vm.applescript", "--name", name,
+	// Create VM command
+	createCommand := []string{
+		"create_vm.applescript", "--name", vmName,
 		"--backend", config.VMBackend,
 		"--arch", config.VMArch,
 		"--iso", isoPath,
 		"--size", strconv.FormatUint(uint64(config.DiskSize), 10),
-	})
-
-	// customize
-	commands = append(commands, []string{
-		"customize_vm.applescript", name,
-		"--cpus", strconv.Itoa(config.HWConfig.CpuCount),
-		"--memory", strconv.Itoa(config.HWConfig.MemorySize),
-	})
-
-	ui.Say("Creating virtual machine...")
-	for _, command := range commands {
-		_, err := driver.ExecuteOsaScript(command...)
-		if err != nil {
-			err := fmt.Errorf("error creating VM: %s", err)
-			state.Put("error", err)
-			ui.Error(err.Error())
-			return multistep.ActionHalt
-		}
-
-		// Set the VM name property on the first command
-		if s.vmName == "" {
-			s.vmName = name
-		}
 	}
 
-	// Set the final name in the state bag so others can use it
-	state.Put("vmName", s.vmName)
+	ui.Say("Creating virtual machine...")
+	output, err := driver.ExecuteOsaScript(createCommand...)
+	if err != nil {
+		err := fmt.Errorf("error creating VM: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
+
+	// Regular expression to capture the VM ID
+	re := regexp.MustCompile(`virtual machine id ([A-F0-9-]+)`)
+	matches := re.FindStringSubmatch(output)
+	var vmId string
+	if len(matches) > 1 {
+		vmId := matches[1] // Capture the VM ID
+		s.vmName = vmName
+		s.vmId = vmId
+		state.Put("vmName", s.vmName)
+		state.Put("vmId", s.vmId)
+	} else {
+		err := fmt.Errorf("error extracting VM ID from output: %s", output)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
+
+	// Customize VM command
+	customizeCommand := []string{
+		"customize_vm.applescript", vmId,
+		"--cpus", strconv.Itoa(config.HWConfig.CpuCount),
+		"--memory", strconv.Itoa(config.HWConfig.MemorySize),
+		"--name", vmName,
+	}
+
+	ui.Say("Customizing virtual machine...")
+	_, err = driver.ExecuteOsaScript(customizeCommand...)
+	if err != nil {
+		err := fmt.Errorf("error customizing VM: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
 
 	return multistep.ActionContinue
 }

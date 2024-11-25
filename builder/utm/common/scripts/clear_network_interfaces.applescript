@@ -1,7 +1,7 @@
 on run argv
-  set vmName to item 1 of argv # Name of the VM
+  set vmId to item 1 of argv # Id of the VM
   tell application "UTM"
-    set vm to virtual machine named vmName
+    set vm to virtual machine id vmId
     set config to configuration of vm
 
     -- Initialize the network interfaces list to empty

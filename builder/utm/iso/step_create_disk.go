@@ -17,12 +17,12 @@ func (s *stepCreateDisk) Run(ctx context.Context, state multistep.StateBag) mult
 	config := state.Get("config").(*Config)
 	driver := state.Get("driver").(utmcommon.Driver)
 	ui := state.Get("ui").(packersdk.Ui)
-	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 
 	ui.Say(fmt.Sprintf("Creating hard drive with size %d MiB...", config.DiskSize))
 
 	command := []string{
-		"add_drive.applescript", vmName,
+		"add_drive.applescript", vmId,
 		"--size", fmt.Sprintf("%d", config.DiskSize),
 	}
 	_, err := driver.ExecuteOsaScript(command...)

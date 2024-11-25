@@ -1,10 +1,10 @@
 ---
 -- attach_iso.applescript
 -- This script attaches an ISO file to a specified UTM virtual machine at index 1 (first drive).
--- Usage: osascript attach_iso.applescript <VM_NAME> --iso <ISO_PATH>
+-- Usage: osascript attach_iso.applescript <VM_ID> --iso <ISO_PATH>
 -- Example: osascript attach_iso.applescript test --iso "ubuntu-24.04-live-server-arm64.iso"
 on run argv
-  set vmName to item 1 of argv # Name of the VM
+  set vmId to item 1 of argv # ID of the VM
   -- Parse the --iso argument
   set isoPath to item 3 of argv as string
 
@@ -13,7 +13,7 @@ on run argv
 
   tell application "UTM"
     -- Get the VM and its configuration
-    set vm to virtual machine named vmName -- Name is assumed to be valid
+    set vm to virtual machine id vmId -- Id is assumed to be valid
     set config to configuration of vm
 
     -- Existing drives
