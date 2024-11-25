@@ -31,7 +31,7 @@ func (s *StepImport) Run(ctx context.Context, state multistep.StateBag) multiste
 	var err error
 
 	ui.Say(fmt.Sprintf("Importing VM: %s", vmPath))
-	if vmId, err = driver.Import(s.Name, vmPath); err != nil {
+	if vmId, err = driver.Import(vmPath); err != nil {
 		err := fmt.Errorf("error importing VM: %s", err)
 		state.Put("error", err)
 		ui.Error(err.Error())

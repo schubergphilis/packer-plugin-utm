@@ -14,7 +14,7 @@ type Utm46Driver struct {
 }
 
 // UTM 4.6 : We import a VM by utm file using UTM import command.
-func (d *Utm46Driver) Import(name string, path string) (string, error) {
+func (d *Utm46Driver) Import(path string) (string, error) {
 	var stdout bytes.Buffer
 
 	// Import VM

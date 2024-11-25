@@ -30,7 +30,7 @@ type Driver interface {
 	Export(string, string) error
 
 	// Import a VM
-	Import(string, string) (string, error)
+	Import(string) (string, error)
 
 	// Checks if the VM with the given id is running.
 	IsRunning(string) (bool, error)

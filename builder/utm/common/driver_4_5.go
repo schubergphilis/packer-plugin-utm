@@ -97,7 +97,7 @@ func (d *Utm45Driver) Export(vmId string, path string) error {
 }
 
 // UTM 4.5 : We just create a VM shortcut using UTM open command.
-func (d *Utm45Driver) Import(name string, path string) (string, error) {
+func (d *Utm45Driver) Import(path string) (string, error) {
 	var stdout bytes.Buffer
 	// TODO: While importing we should have ability to set the name of the VM
 	// UTM does not support setting the name of the VM while importing
