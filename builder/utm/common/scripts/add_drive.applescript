@@ -11,7 +11,7 @@ on run argv
 
   tell application "UTM"
     -- Get the VM and its configuration
-    set vm to virtual machine id vmName -- Id is assumed to be valid
+    set vm to virtual machine id vmId -- Id is assumed to be valid
     set config to configuration of vm
 
     -- Existing drives
