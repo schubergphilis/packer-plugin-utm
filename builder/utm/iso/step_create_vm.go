@@ -3,6 +3,7 @@ package iso
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 
@@ -52,7 +53,7 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 	matches := re.FindStringSubmatch(output)
 	var vmId string
 	if len(matches) > 1 {
-		vmId := matches[1] // Capture the VM ID
+		vmId = matches[1] // Capture the VM ID
 		s.vmName = vmName
 		s.vmId = vmId
 		state.Put("vmName", s.vmName)
@@ -63,6 +64,8 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
+
+	log.Printf("VM Id: %s", vmId)
 
 	// Customize VM command
 	customizeCommand := []string{
