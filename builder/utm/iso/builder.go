@@ -82,7 +82,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		},
 		new(stepConfigureVNC),
 		&utmcommon.StepPause{
-			Message: "UTM API: Add QEMU Additional Arguments `-vnc 127.0.0.1:port` port=VncPort-5900",
+			Message: "UTM API Unavailable: Add a display device to the VM for VNC to work",
 		},
 		&utmcommon.StepRun{},
 		&stepTypeBootCommand{},

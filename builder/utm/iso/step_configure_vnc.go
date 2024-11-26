@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/net"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
+	utmcommon "github.com/naveenrajm7/packer-plugin-utm/builder/utm/common"
 )
 
 // This step configures the VM to enable the VNC server.
@@ -45,7 +46,9 @@ func VNCPassword() string {
 
 func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
+	driver := state.Get("driver").(utmcommon.Driver)
 	ui := state.Get("ui").(packersdk.Ui)
+	vmId := state.Get("vmId").(string)
 
 	// Find an open VNC port. Note that this can still fail later on
 	// because we have to release the port at some point. But this does its
@@ -80,6 +83,23 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 	log.Printf("Found available VNC port: %d on IP: %s", vncPort, config.VNCBindAddress)
 	state.Put("vnc_port", vncPort)
 	state.Put("vnc_password", vncPassword)
+
+	// Add VNC arguments to the VM via Qemu additional arguments.
+	// Send choosen vncPort - 5900 as the VNC port.
+	vncArgument := fmt.Sprintf("-vnc %s:%d", config.VNCBindAddress, vncPort-5900)
+	addQemuArgsCommand := []string{
+		"add_qemu_additional_args.applescript", vmId,
+		"--args", vncArgument,
+	}
+
+	ui.Say("Adding QEMU additional arguments...")
+	_, err = driver.ExecuteOsaScript(addQemuArgsCommand...)
+	if err != nil {
+		err := fmt.Errorf("error adding QEMU additional arguments: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
 
 	return multistep.ActionContinue
 }
