@@ -99,7 +99,7 @@ func (s *stepCreateVM) Cleanup(state multistep.StateBag) {
 	_, cancelled := state.GetOk(multistep.StateCancelled)
 	_, halted := state.GetOk(multistep.StateHalted)
 	if (config.KeepRegistered) && (!cancelled && !halted) {
-		ui.Say("Keeping virtual machine registered with VirtualBox host (keep_registered = true)")
+		ui.Say("Keeping virtual machine registered with UTM host (keep_registered = true)")
 		return
 	}
 

@@ -80,6 +80,7 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 	}
 
 	// TODO: Make sure the outputPath is an absolute path and that the directory exists.
+	// TODO: Get abosolute path of the output directory.
 	// Export via applescript POSIX only works with absolute paths.
 	outputPath := filepath.Join(s.OutputDir, s.OutputFilename+"."+s.Format)
 	ui.Say("Exporting virtual machine...")
