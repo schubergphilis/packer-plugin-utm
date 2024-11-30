@@ -11,6 +11,7 @@ import (
 
 	"github.com/naveenrajm7/packer-plugin-utm/builder/utm/iso"
 	"github.com/naveenrajm7/packer-plugin-utm/builder/utm/utm"
+	utmPPvagrant "github.com/naveenrajm7/packer-plugin-utm/post-processor/vagrant"
 	utmPPzip "github.com/naveenrajm7/packer-plugin-utm/post-processor/zip"
 	"github.com/naveenrajm7/packer-plugin-utm/version"
 )
@@ -20,6 +21,7 @@ func main() {
 	pps.RegisterBuilder("iso", new(iso.Builder))
 	pps.RegisterBuilder("utm", new(utm.Builder))
 	pps.RegisterPostProcessor("zip", new(utmPPzip.PostProcessor))
+	pps.RegisterPostProcessor("vagrant", new(utmPPvagrant.PostProcessor))
 	pps.SetVersion(version.PluginVersion)
 	err := pps.Run()
 	if err != nil {
