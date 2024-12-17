@@ -105,6 +105,7 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 }
 
 func (s *stepConfigureVNC) Cleanup(multistep.StateBag) {
+	// TODO: Remove VNC qemu additional arguments as part of cleanup.
 	if s.l != nil {
 		err := s.l.Close()
 		if err != nil {
