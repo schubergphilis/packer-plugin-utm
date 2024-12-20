@@ -79,10 +79,43 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 		}
 	}
 
-	// TODO: Make sure the outputPath is an absolute path and that the directory exists.
-	// TODO: Get abosolute path of the output directory.
+	// Clear out the Packer-created VNC qemu argument
+	vncQemuArg := state.Get("vncQemuArg")
+	if vncQemuArg != "" {
+		ui.Message(fmt.Sprintf(
+			"Removing VNC QEMU additional arguments %s", vncQemuArg))
+		// Assert that vncQemuArg is of type string
+		vncQemuArgStr, ok := vncQemuArg.(string)
+		if !ok {
+			err := fmt.Errorf("vncQemuArg is not of type string")
+			state.Put("error", err)
+			ui.Error(err.Error())
+			return multistep.ActionHalt
+		}
+		removeQemuArgsCommand := []string{
+			"remove_qemu_additional_args.applescript", vmId,
+			"--args", vncQemuArgStr,
+		}
+		_, err := driver.ExecuteOsaScript(removeQemuArgsCommand...)
+		if err != nil {
+			err := fmt.Errorf("error removing QEMU additional arguments: %s", err)
+			state.Put("error", err)
+			ui.Error(err.Error())
+			return multistep.ActionHalt
+		}
+	}
+
+	// Get the absolute path of the output directory
+	absOutputDir, err := filepath.Abs(s.OutputDir)
+	if err != nil {
+		err := fmt.Errorf("error getting absolute path of output directory: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
+
 	// Export via applescript POSIX only works with absolute paths.
-	outputPath := filepath.Join(s.OutputDir, s.OutputFilename+"."+s.Format)
+	outputPath := filepath.Join(absOutputDir, s.OutputFilename+"."+s.Format)
 	ui.Say("Exporting virtual machine...")
 
 	// Export the VM to an UTM file

@@ -86,10 +86,10 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 
 	// Add VNC arguments to the VM via Qemu additional arguments.
 	// Send choosen vncPort - 5900 as the VNC port.
-	vncArgument := fmt.Sprintf("-vnc %s:%d", config.VNCBindAddress, vncPort-5900)
+	vncQemuArg := fmt.Sprintf("-vnc %s:%d", config.VNCBindAddress, vncPort-5900)
 	addQemuArgsCommand := []string{
 		"add_qemu_additional_args.applescript", vmId,
-		"--args", vncArgument,
+		"--args", vncQemuArg,
 	}
 
 	ui.Say("Adding QEMU additional arguments...")
@@ -100,12 +100,14 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
+	// Save the VNC QEMU argument for later cleanup
+	state.Put("vncQemuArg", vncQemuArg)
 
 	return multistep.ActionContinue
 }
 
 func (s *stepConfigureVNC) Cleanup(multistep.StateBag) {
-	// TODO: Remove VNC qemu additional arguments as part of cleanup.
+	// release the port
 	if s.l != nil {
 		err := s.l.Close()
 		if err != nil {
