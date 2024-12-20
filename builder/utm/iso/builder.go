@@ -116,6 +116,9 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Delay:           b.config.PostShutdownDelay,
 			DisableShutdown: b.config.DisableShutdown,
 		},
+		&utmcommon.StepPause{
+			Message: "Make required changes to the VM before export.\nRemove display, Add Serial port, Icon, etc.",
+		},
 		&utmcommon.StepExport{
 			Format:         b.config.Format,
 			OutputDir:      b.config.OutputDir,
