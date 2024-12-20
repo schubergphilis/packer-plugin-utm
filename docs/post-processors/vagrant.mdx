@@ -1,0 +1,31 @@
+# UTM Vagrant Post-Processor
+
+Type: `utm-vagrant`
+Artifact BuilderId: `naveenrajm7.utm.post-processor.vagrant`
+
+The Packer UTM vagrant post-processor takes an artifact with .utm directory and creates a Vagrant box.
+
+## Basic Example
+
+```hcl
+  # Convert machines to vagrant boxes
+  post-processor "utm-vagrant" {
+    compression_level = 9
+    output            = "${path.root}/${var.os_name}-${var.os_version}.box"
+  }
+```
+
+<!-- Post-Processor Configuration Fields -->
+## Configuration Reference
+
+<!--
+  Optional Configuration Fields
+
+  Configuration options that are not required or have reasonable defaults
+  should be listed under the optionals section. Defaults values should be
+  noted in the description of the field
+-->
+
+### Optional:
+
+@include 'post-processor/vagrant/Config-not-required.mdx'

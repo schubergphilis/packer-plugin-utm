@@ -1,6 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:generate packer-sdc struct-markdown
 //go:generate packer-sdc mapstructure-to-hcl2 -type Config
 
 // vagrant implements the packersdk.PostProcessor interface and adds a
@@ -66,6 +67,8 @@ type Config struct {
 	ctx interpolate.Context
 }
 
+// PostProcessor implements packersdk.PostProcessor
+// Creates a Vagrant box of a given UTM directory (UTM VM bundle)
 type PostProcessor struct {
 	config Config
 }

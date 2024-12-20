@@ -16,6 +16,7 @@ import (
 	utmcommon "github.com/naveenrajm7/packer-plugin-utm/builder/utm/common"
 )
 
+// Config is the configuration structure for the UTM ISO builder.
 type Config struct {
 	common.PackerConfig        `mapstructure:",squash"`
 	commonsteps.HTTPConfig     `mapstructure:",squash"`
