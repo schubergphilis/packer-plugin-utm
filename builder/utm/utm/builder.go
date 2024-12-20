@@ -14,7 +14,7 @@ import (
 )
 
 // Builder implements packersdk.Builder and builds the actual UTM
-// images.
+// images starting from an existing UTM VM.
 type Builder struct {
 	config Config
 	runner multistep.Runner

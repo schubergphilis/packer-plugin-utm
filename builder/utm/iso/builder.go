@@ -15,6 +15,8 @@ import (
 
 const BuilderId = "naveenrajm7.iso"
 
+// Builder implements packersdk.Builder and builds the actual UTM
+// images starting from an ISO file.
 type Builder struct {
 	config Config
 	runner multistep.Runner
