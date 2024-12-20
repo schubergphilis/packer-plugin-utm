@@ -23,7 +23,7 @@ func TestStepShutdown_noShutdownCommand(t *testing.T) {
 
 	comm := new(packersdk.MockCommunicator)
 	state.Put("communicator", comm)
-	state.Put("vmName", "foo")
+	state.Put("vmId", "foo")
 
 	driver := state.Get("driver").(*DriverMock)
 
@@ -53,7 +53,7 @@ func TestStepShutdown_shutdownCommand(t *testing.T) {
 
 	comm := new(packersdk.MockCommunicator)
 	state.Put("communicator", comm)
-	state.Put("vmName", "foo")
+	state.Put("vmId", "foo")
 
 	driver := state.Get("driver").(*DriverMock)
 	driver.IsRunningReturn = true
@@ -91,7 +91,7 @@ func TestStepShutdown_shutdownTimeout(t *testing.T) {
 
 	comm := new(packersdk.MockCommunicator)
 	state.Put("communicator", comm)
-	state.Put("vmName", "foo")
+	state.Put("vmId", "foo")
 
 	driver := state.Get("driver").(*DriverMock)
 	driver.IsRunningReturn = true
@@ -120,7 +120,7 @@ func TestStepShutdown_DisableShutdown(t *testing.T) {
 
 	comm := new(packersdk.MockCommunicator)
 	state.Put("communicator", comm)
-	state.Put("vmName", "foo")
+	state.Put("vmId", "foo")
 
 	driver := state.Get("driver").(*DriverMock)
 	driver.IsRunningReturn = true

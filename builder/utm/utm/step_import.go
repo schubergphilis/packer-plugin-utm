@@ -19,6 +19,7 @@ type StepImport struct {
 	KeepRegistered bool
 
 	vmName string
+	vmId   string
 }
 
 func (s *StepImport) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -26,21 +27,34 @@ func (s *StepImport) Run(ctx context.Context, state multistep.StateBag) multiste
 	ui := state.Get("ui").(packersdk.Ui)
 	vmPath := state.Get("vm_path").(string)
 
+	var vmId string
+	var err error
+
 	ui.Say(fmt.Sprintf("Importing VM: %s", vmPath))
-	if err := driver.Import(s.Name, vmPath); err != nil {
-		err := fmt.Errorf("Error importing VM: %s", err)
+	if vmId, err = driver.Import(vmPath); err != nil {
+		err := fmt.Errorf("error importing VM: %s", err)
 		state.Put("error", err)
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
+	s.vmId = vmId
+	state.Put("vmId", s.vmId)
 
+	// set VM name
+	if _, err = driver.ExecuteOsaScript("customize_vm.applescript", vmId, "--name", s.Name); err != nil {
+		err := fmt.Errorf("error setting VM name: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
 	s.vmName = s.Name
 	state.Put("vmName", s.Name)
+
 	return multistep.ActionContinue
 }
 
 func (s *StepImport) Cleanup(state multistep.StateBag) {
-	if s.vmName == "" {
+	if s.vmId == "" {
 		return
 	}
 
@@ -55,7 +69,7 @@ func (s *StepImport) Cleanup(state multistep.StateBag) {
 	}
 
 	ui.Say("Deregistering and deleting imported VM...")
-	if err := driver.Delete(s.vmName); err != nil {
+	if err := driver.Delete(s.vmId); err != nil {
 		ui.Error(fmt.Sprintf("Error deleting VM: %s", err))
 	}
 }

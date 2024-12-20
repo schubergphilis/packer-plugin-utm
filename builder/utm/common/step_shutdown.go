@@ -37,7 +37,7 @@ func (s *StepShutdown) Run(ctx context.Context, state multistep.StateBag) multis
 	comm := state.Get("communicator").(packersdk.Communicator)
 	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
-	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 
 	if !s.DisableShutdown {
 		if s.Command != "" {
@@ -53,7 +53,7 @@ func (s *StepShutdown) Run(ctx context.Context, state multistep.StateBag) multis
 
 		} else {
 			ui.Say("Halting the virtual machine...")
-			if err := driver.Stop(vmName); err != nil {
+			if err := driver.Stop(vmId); err != nil {
 				err := fmt.Errorf("error stopping VM: %s", err)
 				state.Put("error", err)
 				ui.Error(err.Error())
@@ -68,7 +68,7 @@ func (s *StepShutdown) Run(ctx context.Context, state multistep.StateBag) multis
 	log.Printf("Waiting max %s for shutdown to complete", s.Timeout)
 	shutdownTimer := time.After(s.Timeout)
 	for {
-		running, _ := driver.IsRunning(vmName)
+		running, _ := driver.IsRunning(vmId)
 		if !running {
 
 			if s.Delay.Nanoseconds() > 0 {

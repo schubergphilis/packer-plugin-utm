@@ -42,6 +42,7 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
 	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 	if s.OutputFilename == "" {
 		s.OutputFilename = vmName
 	}
@@ -67,7 +68,7 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 			return multistep.ActionHalt
 		}
 		command := []string{
-			"clear_port_forwards.applescript", vmName,
+			"clear_port_forwards.applescript", vmId,
 			"--index", "1", strconv.Itoa(commPortInt),
 		}
 		if _, err := driver.ExecuteOsaScript(command...); err != nil {
@@ -78,41 +79,58 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 		}
 	}
 
-	// Export the VM to an UTM file
-	outputPath := filepath.Join(s.OutputDir, s.OutputFilename+"."+s.Format)
-	ui.Say("Exporting virtual machine...")
+	// Clear out the Packer-created VNC qemu argument
+	vncQemuArg := state.Get("vncQemuArg")
+	if vncQemuArg != "" {
+		ui.Message(fmt.Sprintf(
+			"Removing VNC QEMU additional arguments %s", vncQemuArg))
+		// Assert that vncQemuArg is of type string
+		vncQemuArgStr, ok := vncQemuArg.(string)
+		if !ok {
+			err := fmt.Errorf("vncQemuArg is not of type string")
+			state.Put("error", err)
+			ui.Error(err.Error())
+			return multistep.ActionHalt
+		}
+		removeQemuArgsCommand := []string{
+			"remove_qemu_additional_args.applescript", vmId,
+			"--args", vncQemuArgStr,
+		}
+		_, err := driver.ExecuteOsaScript(removeQemuArgsCommand...)
+		if err != nil {
+			err := fmt.Errorf("error removing QEMU additional arguments: %s", err)
+			state.Put("error", err)
+			ui.Error(err.Error())
+			return multistep.ActionHalt
+		}
+	}
 
-	// TODO: Actually export the VM when UTM API supports it
-	// Till then ask the user to manually export the VM
-	// using Share action in UTM VM in output Path
-	ui.Say("UTM API does not support exporting VMs yet.")
-	ui.Say("Please manually export the VM using 'Share...' action in UTM VM menu.")
-	ui.Say(fmt.Sprintf("Please make sure the VM is exported to the path %s ", outputPath))
-	ui.Say("The exported UTM file in the output directory will be passed as build Artifact.")
-	// ask user to input the path of the exported file
-	confirmOption, err := ui.Ask(
-		fmt.Sprintf("Confirm you have exported the VM to path [%s] [Y/n]:", outputPath))
-
+	// Get the absolute path of the output directory
+	absOutputDir, err := filepath.Abs(s.OutputDir)
 	if err != nil {
-		err := fmt.Errorf("error during export step: %s", err)
+		err := fmt.Errorf("error getting absolute path of output directory: %s", err)
 		state.Put("error", err)
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
 
-	if confirmOption == "Y" || confirmOption == "y" {
-		// Proceed with the next steps
-		ui.Say("Proceeding assuming the export is done...")
-		// We set export path as the output directory with UTM file.
-		// So it can be used as an artifact in the next steps.
-		state.Put("exportPath", outputPath)
+	// Export via applescript POSIX only works with absolute paths.
+	outputPath := filepath.Join(absOutputDir, s.OutputFilename+"."+s.Format)
+	ui.Say("Exporting virtual machine...")
 
-		return multistep.ActionContinue
-	} else {
-		ui.Say("Export halted by user.")
+	// Export the VM to an UTM file
+	if err := driver.Export(vmId, outputPath); err != nil {
+		err := fmt.Errorf("error exporting VM: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
 
+	// We set export path as the output directory with UTM file.
+	// So it can be used as an artifact in the next steps.
+	state.Put("exportPath", outputPath)
+
+	return multistep.ActionContinue
 }
 
 func (s *StepExport) Cleanup(state multistep.StateBag) {}

@@ -1,9 +1,9 @@
-# Usage: osascript clear_port_forwards.applescript <vmName> --index <index> <hostPort> --index <index> <hostPort> ...
+# Usage: osascript clear_port_forwards.applescript <vmId> --index <index> <hostPort> --index <index> <hostPort> ...
 # index is the index of the network interface
 # hostPort is the host port to remove from the port forwards
 on run argv
-  -- VM Name is assumed to be the first argument
-  set vmName to item 1 of argv 
+  -- VM Id is assumed to be the first argument
+  set vmId to item 1 of argv 
     -- Initialize an empty list to store port forwarding rules to be deleted
     set portForwardRules to {}
 
@@ -25,7 +25,7 @@ on run argv
 
   -- Add port forwarding rules to the corresponding network interfaces
   tell application "UTM"
-    set vm to virtual machine named vmName
+    set vm to virtual machine id vmId
     set config to configuration of vm
 
     set networkInterfaces to network interfaces of config

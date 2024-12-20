@@ -36,8 +36,8 @@ func TestStepImport(t *testing.T) {
 	if !driver.ImportCalled {
 		t.Fatal("import should be called")
 	}
-	if driver.ImportName != step.Name {
-		t.Fatalf("bad: %#v", driver.ImportName)
+	if driver.ImportId != step.vmId {
+		t.Fatalf("bad: %#v", driver.ImportId)
 	}
 
 	// Test output state
@@ -53,7 +53,7 @@ func TestStepImport_Cleanup(t *testing.T) {
 	state.Put("vm_path", "foo")
 
 	step := new(StepImport)
-	step.vmName = "bar"
+	step.vmId = "bar"
 
 	driver := state.Get("driver").(*utmcommon.DriverMock)
 

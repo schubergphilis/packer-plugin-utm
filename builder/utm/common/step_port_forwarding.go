@@ -22,18 +22,18 @@ import (
 //
 // Produces:
 type StepPortForwarding struct {
-	CommConfig     *communicator.Config
-	HostPortMin    int
-	HostPortMax    int
-	SkipNatMapping bool
-
-	l *net.Listener
+	CommConfig             *communicator.Config
+	HostPortMin            int
+	HostPortMax            int
+	SkipNatMapping         bool
+	ClearNetworkInterfaces bool // if true, all network interfaces will be cleared before adding new ones
+	l                      *net.Listener
 }
 
 func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
-	vmName := state.Get("vmName").(string)
+	vmId := state.Get("vmId").(string)
 
 	if s.CommConfig.Type == "none" {
 		log.Printf("Not using a communicator, skipping setting up port forwarding...")
@@ -63,46 +63,49 @@ func (s *StepPortForwarding) Run(ctx context.Context, state multistep.StateBag) 
 		s.l.Listener.Close() // free port, but don't unlock lock file
 		commHostPort = s.l.Port
 
-		// Make sure to clear the network interfaces and prepare for the new configuration
-		// if _, err := driver.ExecuteOsaScript("clear_network_interfaces.applescript", vmName); err != nil {
-		// 	err := fmt.Errorf("error clearing network interfaces: %s", err)
-		// 	state.Put("error", err)
-		// 	ui.Error(err.Error())
-		// 	return multistep.ActionHalt
-		// }
+		// Clear network interfaces and add new ones.
+		// Else, We assume the VM is already configured with a 'Shared Network' interface
+		// and 'Emulated VLAN' interface at index 0 and 1 respectively.
+		if s.ClearNetworkInterfaces {
+			// Make sure to clear the network interfaces and prepare for the new configuration
+			if _, err := driver.ExecuteOsaScript("clear_network_interfaces.applescript", vmId); err != nil {
+				err := fmt.Errorf("error clearing network interfaces: %s", err)
+				state.Put("error", err)
+				ui.Error(err.Error())
+				return multistep.ActionHalt
+			}
 
-		// We now hard code interfaces as needed by Vagrant,
-		// 0 index - 'Shared Network' interface
-		// 1 index - 'Emulated VLAN' interface
-		// but this should be configurable
+			// We now hard code interfaces as needed by Vagrant and Packer.
+			// 0 index - 'Shared Network' interface
+			// 1 index - 'Emulated VLAN' interface
+			// but this should be configurable
 
-		// // Add access to localhost => UTM 'Shared Network' interface
-		// if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmName, "ShRd"); err != nil {
-		// 	err := fmt.Errorf("error adding network interface: %s", err)
-		// 	state.Put("error", err)
-		// 	ui.Error(err.Error())
-		// 	return multistep.ActionHalt
-		// }
+			// Add access to localhost => UTM 'Shared Network' interface
+			if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmId, "ShRd"); err != nil {
+				err := fmt.Errorf("error adding network interface: %s", err)
+				state.Put("error", err)
+				ui.Error(err.Error())
+				return multistep.ActionHalt
+			}
 
-		// TODO: check if we need to add the 'Shared Network' interface
-		// TODO: check if we need to add the 'Emulated VLAN' interface
-		// and then add if needed
-		// We assume the VM is already configured with a 'Shared Network' interface
-		// and we only need to add the 'Emulated VLAN' interface so it sits at index 1
-		// Make sure to configure the network interface to 'Emulated VLAN' mode
-		// required for port forwarding now in packer , later in vagrant
-		// if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmName, "EmUd"); err != nil {
-		// 	err := fmt.Errorf("error adding network interface: %s", err)
-		// 	state.Put("error", err)
-		// 	ui.Error(err.Error())
-		// 	return multistep.ActionHalt
-		// }
+			// TODO: check if we need to add the 'Shared Network' interface
+			// TODO: check if we need to add the 'Emulated VLAN' interface
+			// and then add if needed
+			// Make sure to configure the network interface to 'Emulated VLAN' mode
+			// required for port forwarding now in packer , later in vagrant
+			if _, err := driver.ExecuteOsaScript("add_network_interface.applescript", vmId, "EmUd"); err != nil {
+				err := fmt.Errorf("error adding network interface: %s", err)
+				state.Put("error", err)
+				ui.Error(err.Error())
+				return multistep.ActionHalt
+			}
+		}
 
 		// Create a forwarded port mapping to the VM (on the 'Emulated VLAN' interface)
 		// "tcp, 127.0.0.1, hostPort, guestPort"
 		ui.Say(fmt.Sprintf("Creating forwarded port mapping for communicator (SSH, WinRM, etc) (host port %d)", commHostPort))
 		command := []string{
-			"add_port_forwards.applescript", vmName,
+			"add_port_forwards.applescript", vmId,
 			"--index", "1",
 			fmt.Sprintf("TcPp,,%d,127.0.0.1,%d", guestPort, commHostPort),
 		}

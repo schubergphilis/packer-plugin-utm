@@ -1,0 +1,136 @@
+---
+modeline: |
+  vim: set ft=pandoc:
+description: |
+  This UTM Packer builder is able to create UTM virtual machines
+  and export them in the .UTM format, starting from an ISO file.
+page_title: UTM iso - Builders
+nav_title: UTM
+---
+
+# UTM Builder (from an ISO file)
+
+Type: `utm-iso`
+Artifact BuilderId: `naveenrajm7.iso`
+
+The UTM Packer builder is able to create
+[UTM](https://mac.getutm.app/) virtual machines and export them in
+the .utm format., starting from an existing ISO file.
+
+The builder builds a virtual machine by creating 
+a new virtual machine from scratch, booting it, installing an OS, 
+provisioning software within the OS, then shutting it down. 
+The result of the UTM builder is a directory containing 
+all the files necessary to run the virtual machine portably.
+
+<!--
+  A basic example on the usage of the builder. Multiple examples
+  can be provided to highlight various build configurations.
+-->
+### Basic Example
+
+Here is a basic example. This example is not functional. 
+It will start the OS installer but then fail because we don't provide the install config file for OpenBSD to self-install. 
+Still, the example serves to show the basic configuration:
+
+```hcl
+source "utm-iso" "basic-example" {
+  iso_url = "https://cdn.openbsd.org/pub/OpenBSD/7.6/arm64/install76.iso"
+  iso_checksum = "file:https://cdn.openbsd.org/pub/OpenBSD/7.6/arm64/SHA256"
+  vm_backend = "qemu"
+  ssh_username = "vagrant"
+  ssh_password = "vagrant"
+  # Assumes ssh user (vagrant) exists and can doas without password
+  shutdown_command = "doas -u root shutdown -p now"
+}
+
+build {
+  sources = [ "source.utm-iso.basic-example" ]
+}
+```
+
+It is important to add a `shutdown_command`. By default Packer halts the virtual
+machine and the file system may not be sync'd. Thus, changes made in a
+provisioner might not be saved.
+
+<!-- Builder Configuration Fields -->
+## UTM-ISO Builder Configuration Reference
+
+There are many configuration options available for the builder. In addition to
+the items listed here, you will want to look at the general configuration
+references for [ISO](#iso-configuration),
+[HTTP](#http-directory-configuration),
+[Export](#export-configuration),
+[Boot](#boot-configuration),
+[Shutdown](#shutdown-configuration),
+[Run](#run-configuration),
+[Communicator](#communicator-configuration)
+configuration references, which are
+necessary for this build to succeed and can be found further down the page.
+
+
+### Optional:
+
+@include 'builder/utm/iso/Config-not-required.mdx'
+
+@include 'builder/utm/common/UtmVersionConfig-not-required.mdx'
+
+
+
+### ISO Configuration
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig.mdx'
+
+#### Required:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig-required.mdx'
+
+#### Optional:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig-not-required.mdx'
+
+
+### Http directory configuration
+
+@include 'packer-plugin-sdk/multistep/commonsteps/HTTPConfig.mdx'
+
+#### Optional:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/HTTPConfig-not-required.mdx'
+
+
+
+### Export configuration
+
+#### Optional:
+
+@include 'builder/utm/common/ExportConfig-not-required.mdx'
+
+
+
+### Shutdown configuration
+
+#### Optional:
+
+@include 'builder/utm/common/ShutdownConfig-not-required.mdx'
+
+### Communicator configuration
+
+#### Optional common fields:
+
+@include 'packer-plugin-sdk/communicator/Config-not-required.mdx'
+
+@include 'builder/utm/common/CommConfig-not-required.mdx'
+
+
+
+### Boot Configuration
+
+@include 'packer-plugin-sdk/bootcommand/BootConfig.mdx'
+
+#### Optional:
+
+@include 'packer-plugin-sdk/bootcommand/BootConfig-not-required.mdx'
+
+
+

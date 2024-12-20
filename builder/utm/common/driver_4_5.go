@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// Utm45Driver is the base type for UTM drivers
 type Utm45Driver struct {
 	// This is the path to the utmctl binary
 	UtmctlPath string
@@ -73,7 +74,30 @@ func (d *Utm45Driver) ExecuteOsaScript(command ...string) (string, error) {
 	return stdoutString, err
 }
 
-func (d *Utm45Driver) Import(name string, path string) error {
+// UTM 4.5 Doesn't support exporting VMs
+func (d *Utm45Driver) Export(vmId string, path string) error {
+	// just print a message to the user
+	log.Printf("UTM API does not support exporting VMs yet.")
+	log.Printf("Please manually export the VM using 'Share...' action in UTM VM menu.")
+	log.Printf("Please make sure the VM is exported to the path %s ", path)
+	log.Printf("The exported UTM file in the output directory will be passed as build Artifact.")
+
+	// TODO: Pause and wait for the user to export the VM
+	// // ask user to input the path of the exported file
+	// confirmOption, err := ui.Ask(
+	// 	fmt.Sprintf("Confirm you have exported the VM to path [%s] [Y/n]:", outputPath))
+
+	// if err != nil {
+	// 	err := fmt.Errorf("error during export step: %s", err)
+	// 	state.Put("error", err)
+	// 	ui.Error(err.Error())
+	// 	return multistep.ActionHalt
+	// }
+	return nil
+}
+
+// UTM 4.5 : We just create a VM shortcut using UTM open command.
+func (d *Utm45Driver) Import(path string) (string, error) {
 	var stdout bytes.Buffer
 	// TODO: While importing we should have ability to set the name of the VM
 	// UTM does not support setting the name of the VM while importing
@@ -85,14 +109,14 @@ func (d *Utm45Driver) Import(name string, path string) error {
 	)
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return err
+		return "", err
 	}
 	// "missing value" in the output means AppleScript was successful
 	// but not necessarily the VM was imported successfully
 	// UTM does not provide a way to check if the VM was imported successfully
 	// So we pray!
 	// The error appears in UI, but not through script
-	return nil
+	return "", nil
 }
 
 func (d *Utm45Driver) IsRunning(name string) (bool, error) {
@@ -165,6 +189,7 @@ func (d *Utm45Driver) Verify() error {
 	return nil
 }
 
+// Version reads the version of UTM that is installed.
 func (d *Utm45Driver) Version() (string, error) {
 	var stdout bytes.Buffer
 

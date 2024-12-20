@@ -2,8 +2,10 @@ package common
 
 import (
 	"embed"
+	"fmt"
 	"log"
 	"os/exec"
+	"strings"
 )
 
 var (
@@ -24,10 +26,13 @@ type Driver interface {
 	// Executes the given AppleScript with the given arguments.
 	ExecuteOsaScript(command ...string) (string, error)
 
-	// Import a VM
-	Import(string, string) error
+	// Export a VM to a UTM file
+	Export(string, string) error
 
-	// Checks if the VM with the given name is running.
+	// Import a VM
+	Import(string) (string, error)
+
+	// Checks if the VM with the given id is running.
 	IsRunning(string) (bool, error)
 
 	// Stop stops a running machine, forcefully.
@@ -55,9 +60,34 @@ func NewDriver() (Driver, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	log.Printf("utmctl path: %s", utmctlPath)
-	driver := &Utm45Driver{utmctlPath}
+
+	// Get the version of UTM
+	var driver Driver
+	driver = &Utm45Driver{utmctlPath}
+	version, err := driver.Version()
+	if err != nil {
+		log.Fatalf("Error getting UTM version: %v", err)
+	}
+	fmt.Printf("UTM version: %s\n", version)
+
+	// Parse the version to get major and minor parts
+	versionParts := strings.Split(version, ".")
+	if len(versionParts) < 2 {
+		log.Fatalf("Invalid UTM version format: %s", version)
+	}
+	majorMinorVersion := fmt.Sprintf("%s.%s", versionParts[0], versionParts[1])
+
+	// Decide which driver to use based on the version
+	switch majorMinorVersion {
+	case "4.5":
+		driver = &Utm45Driver{utmctlPath}
+	case "4.6":
+		driver = &Utm46Driver{Utm45Driver{utmctlPath}}
+	default:
+		log.Fatalf("Unsupported UTM version: %s", version)
+	}
+
 	if err := driver.Verify(); err != nil {
 		return nil, err
 	}
