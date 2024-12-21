@@ -16,7 +16,7 @@ import (
 //
 // Produces:
 //
-//	vmName string - The name of the VM
+//	vmId string - The UUID of the VM
 type stepCreateVM struct {
 	vmName string
 	vmId   string
