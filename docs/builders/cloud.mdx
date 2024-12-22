@@ -8,8 +8,104 @@ page_title: UTM Cloud - Builders
 nav_title: Cloud
 ---
 
-# UTM Cloud Builder (from an QCOW2)
+# UTM Cloud Builder (from an QCOW2 file)
 
 Type: `utm-cloud`
 Artifact BuilderId: `naveenrajm.cloud`
+
+The builder builds a virtual machine by importing an existing cloud image, qcow2 file.
+It then boots this image, runs provisioners on this new VM, and exports that VM
+to create the image. The imported machine is deleted prior to finishing the
+build.
+
+## Basic Example
+
+Here is a basic example. This example is functional if you have an qcow2  matching
+the settings here.
+
+**HCL2**
+
+```hcl
+source "utm-cloud" "basic-example" {
+  iso_url = "cloud.qcow2"
+  iso_checksum = "sha256:1234567890abcdef"
+  // Required to launch http server to serve cloud-init files
+  http_directory =  "/path-to-cloud-file/"
+  ssh_username = "vagrant"
+  ssh_password = "vagrant"
+  shutdown_command = "echo 'vagrant' | sudo -S /sbin/halt -h -p"
+}
+
+build {
+  sources = ["sources.utm-cloud.basic-example"]
+}
+```
+
+It is important to add a `shutdown_command`. By default Packer halts the virtual
+machine and the file system may not be sync'd. Thus, changes made in a
+provisioner might not be saved.
+
+## Configuration Reference
+
+There are many configuration options available for the builder. In addition to
+the items listed here, you will want to look at the general configuration
+references for [ISO](#iso-configuration),
+[HTTP](#http-directory-configuration),
+[Export](#export-configuration),
+[Shutdown](#shutdown-configuration),
+[Run](#run-configuration),
+[Communicator](#communicator-configuration)
+configuration references, which are
+necessary for this build to succeed and can be found further down the page.
+
+### Optional:
+
+@include 'builder/utm/cloud/Config-not-required.mdx'
+
+@include 'builder/utm/common/UtmVersionConfig-not-required.mdx'
+
+### ISO Configuration
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig.mdx'
+
+#### Required:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig-required.mdx'
+
+#### Optional:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig-not-required.mdx'
+
+
+### Http directory configuration
+
+@include 'packer-plugin-sdk/multistep/commonsteps/HTTPConfig.mdx'
+
+#### Optional:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/HTTPConfig-not-required.mdx'
+
+
+
+### Export configuration
+
+#### Optional:
+
+@include 'builder/utm/common/ExportConfig-not-required.mdx'
+
+
+
+### Shutdown configuration
+
+#### Optional:
+
+@include 'builder/utm/common/ShutdownConfig-not-required.mdx'
+
+### Communicator configuration
+
+#### Optional common fields:
+
+@include 'packer-plugin-sdk/communicator/Config-not-required.mdx'
+
+@include 'builder/utm/common/CommConfig-not-required.mdx'
 
