@@ -33,7 +33,7 @@ The following UTM Builders and post-processors are supported.
 - [utm-iso](builders/iso.mdx) - Starts from an ISO file, creates a brand-new UTM VM, installs an OS, provisions software within the OS, then exports that machine to create an image. 
 This is best for people who want to start from scratch.
 
-- utm-cloud (Coming Soon) - This builder imports
+- [utm-cloud](builders/cloud.mdx) - This builder imports
   an existing qcow2 file with cloud-init (cloud image), 
   feeds in your custom cloud-init seed file, 
   runs provisioners on top of that VM, 
