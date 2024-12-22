@@ -101,7 +101,7 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 		return multistep.ActionHalt
 	}
 	// Save the VNC QEMU argument for later cleanup
-	state.Put("vncQemuArg", vncQemuArg)
+	state.Put("qemuAdditionalArg", vncQemuArg)
 
 	return multistep.ActionContinue
 }

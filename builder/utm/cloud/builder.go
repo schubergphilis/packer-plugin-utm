@@ -1,4 +1,4 @@
-package iso
+package cloud
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 	utmcommon "github.com/naveenrajm7/packer-plugin-utm/builder/utm/common"
 )
 
-const BuilderId = "naveenrajm7.iso"
+const BuilderId = "naveenrajm7.cloud"
 
 // Builder implements packersdk.Builder and builds the actual UTM
-// images starting from an ISO file.
+// images starting from an existing qemu cloud image.
 type Builder struct {
 	config Config
 	runner multistep.Runner
@@ -69,12 +69,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			DebugKeyPath: fmt.Sprintf("%s.pem", b.config.PackerBuildName),
 			Comm:         &b.config.Comm,
 		},
-		new(stepCreateVM),
-		// if more disk or ISO is needed then add the following steps
-		// new(stepCreateDisk),
-		// &utmcommon.StepAttachISOs{
-		// 	AttachBootISO: true,
-		// },
+		new(stepCreateCloudVM),
 		&utmcommon.StepPortForwarding{
 			CommConfig:             &b.config.CommConfig.Comm,
 			HostPortMin:            b.config.HostPortMin,
@@ -82,22 +77,14 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			SkipNatMapping:         b.config.SkipNatMapping,
 			ClearNetworkInterfaces: true,
 		},
-		new(stepConfigureVNC),
+		new(stepConfigureCloudSeed),
 		&utmcommon.StepPause{
-			Message: "UTM API Unavailable: Add a display device to the VM for VNC to work",
+			Message: "UTM API Unavailable: Add a display device to the VM for debugging",
 		},
 		&utmcommon.StepRun{},
-		&stepTypeBootCommand{},
 		&utmcommon.StepPause{
-			Message: "Confirm Install is complete and VM is running",
+			Message: "Confirm initial boot with cloud-init is complete and VM is running",
 		},
-		// We stop the VM to remove the ISO file.
-		&utmcommon.StepStopVm{},
-		// After install is complete, remove the ISO file.
-		// Currently no way to identify the ISO driver, so remove the first disk.
-		&stepRemoveFirstDisk{},
-		// We start the VM again for the next steps.
-		&utmcommon.StepRun{},
 		&communicator.StepConnect{
 			Config:    &b.config.CommConfig.Comm,
 			Host:      utmcommon.CommHost(b.config.CommConfig.Comm.Host()),

@@ -1,4 +1,4 @@
-package iso
+package cloud
 
 import (
 	"context"
@@ -17,12 +17,11 @@ import (
 // Produces:
 //
 //	vmId string - The UUID of the VM
-type stepCreateVM struct {
-	vmName string
-	vmId   string
+type stepCreateCloudVM struct {
+	vmId string
 }
 
-func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
+func (s *stepCreateCloudVM) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 	driver := state.Get("driver").(utmcommon.Driver)
 	ui := state.Get("ui").(packersdk.Ui)
@@ -32,11 +31,10 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 
 	// Create VM command
 	createCommand := []string{
-		"create_vm.applescript", "--name", vmName,
+		"create_vm_from_source.applescript", "--name", vmName,
 		"--backend", config.VMBackend,
 		"--arch", config.VMArch,
-		"--iso", isoPath,
-		"--size", strconv.FormatUint(uint64(config.DiskSize), 10),
+		"--source", isoPath,
 	}
 
 	ui.Say("Creating virtual machine...")
@@ -54,10 +52,10 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 	var vmId string
 	if len(matches) > 1 {
 		vmId = matches[1] // Capture the VM ID
-		s.vmName = vmName
 		s.vmId = vmId
-		state.Put("vmName", s.vmName)
 		state.Put("vmId", s.vmId)
+		// save the vm name, used in export step
+		state.Put("vmName", vmName)
 	} else {
 		err := fmt.Errorf("error extracting VM ID from output: %s", output)
 		state.Put("error", err)
@@ -87,8 +85,8 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 	return multistep.ActionContinue
 }
 
-func (s *stepCreateVM) Cleanup(state multistep.StateBag) {
-	if s.vmName == "" {
+func (s *stepCreateCloudVM) Cleanup(state multistep.StateBag) {
+	if s.vmId == "" {
 		return
 	}
 
@@ -104,7 +102,7 @@ func (s *stepCreateVM) Cleanup(state multistep.StateBag) {
 	}
 
 	ui.Say("Deregistering and deleting VM...")
-	if err := driver.Delete(s.vmName); err != nil {
+	if err := driver.Delete(s.vmId); err != nil {
 		ui.Error(fmt.Sprintf("Error deleting VM: %s", err))
 	}
 }

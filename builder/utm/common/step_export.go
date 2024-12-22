@@ -79,13 +79,13 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 		}
 	}
 
-	// Clear out the Packer-created VNC qemu argument
-	vncQemuArg := state.Get("vncQemuArg")
-	if vncQemuArg != "" {
+	// Clear out the Packer-created qemu additional argument
+	qemuAdditionalArg := state.Get("qemuAdditionalArg")
+	if qemuAdditionalArg != nil {
 		ui.Message(fmt.Sprintf(
-			"Removing VNC QEMU additional arguments %s", vncQemuArg))
-		// Assert that vncQemuArg is of type string
-		vncQemuArgStr, ok := vncQemuArg.(string)
+			"Removing VNC QEMU additional argument %s", qemuAdditionalArg))
+		// Assert that qemuAdditionalArg is of type string
+		qemuAdditionalArgStr, ok := qemuAdditionalArg.(string)
 		if !ok {
 			err := fmt.Errorf("vncQemuArg is not of type string")
 			state.Put("error", err)
@@ -94,7 +94,7 @@ func (s *StepExport) Run(ctx context.Context, state multistep.StateBag) multiste
 		}
 		removeQemuArgsCommand := []string{
 			"remove_qemu_additional_args.applescript", vmId,
-			"--args", vncQemuArgStr,
+			"--args", qemuAdditionalArgStr,
 		}
 		_, err := driver.ExecuteOsaScript(removeQemuArgsCommand...)
 		if err != nil {

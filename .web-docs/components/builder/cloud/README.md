@@ -1,39 +1,31 @@
-Type: `utm-iso`
-Artifact BuilderId: `naveenrajm7.iso`
+Type: `utm-cloud`
+Artifact BuilderId: `naveenrajm.cloud`
 
-The UTM Packer builder is able to create
-[UTM](https://mac.getutm.app/) virtual machines and export them in
-the .utm format., starting from an existing ISO file.
+The builder builds a virtual machine by importing an existing cloud image, qcow2 file.
+It then boots this image, runs provisioners on this new VM, and exports that VM
+to create the image. The imported machine is deleted prior to finishing the
+build.
 
-The builder builds a virtual machine by creating 
-a new virtual machine from scratch, booting it, installing an OS, 
-provisioning software within the OS, then shutting it down. 
-The result of the UTM builder is a directory containing 
-all the files necessary to run the virtual machine portably.
+## Basic Example
 
-<!--
-  A basic example on the usage of the builder. Multiple examples
-  can be provided to highlight various build configurations.
--->
-### Basic Example
+Here is a basic example. This example is functional if you have an qcow2  matching
+the settings here.
 
-Here is a basic example. This example is not functional. 
-It will start the OS installer but then fail because we don't provide the install config file for OpenBSD to self-install. 
-Still, the example serves to show the basic configuration:
+**HCL2**
 
 ```hcl
-source "utm-iso" "basic-example" {
-  iso_url = "https://cdn.openbsd.org/pub/OpenBSD/7.6/arm64/install76.iso"
-  iso_checksum = "file:https://cdn.openbsd.org/pub/OpenBSD/7.6/arm64/SHA256"
-  vm_backend = "qemu"
+source "utm-cloud" "basic-example" {
+  iso_url = "cloud.qcow2"
+  iso_checksum = "sha256:1234567890abcdef"
+  // Required to launch http server to serve cloud-init files
+  http_directory =  "/path-to-cloud-file/"
   ssh_username = "vagrant"
   ssh_password = "vagrant"
-  # Assumes ssh user (vagrant) exists and can doas without password
-  shutdown_command = "doas -u root shutdown -p now"
+  shutdown_command = "echo 'vagrant' | sudo -S /sbin/halt -h -p"
 }
 
 build {
-  sources = [ "source.utm-iso.basic-example" ]
+  sources = ["sources.utm-cloud.basic-example"]
 }
 ```
 
@@ -41,67 +33,22 @@ It is important to add a `shutdown_command`. By default Packer halts the virtual
 machine and the file system may not be sync'd. Thus, changes made in a
 provisioner might not be saved.
 
-<!-- Builder Configuration Fields -->
-## UTM-ISO Builder Configuration Reference
+## Configuration Reference
 
 There are many configuration options available for the builder. In addition to
 the items listed here, you will want to look at the general configuration
 references for [ISO](#iso-configuration),
 [HTTP](#http-directory-configuration),
 [Export](#export-configuration),
-[Boot](#boot-configuration),
 [Shutdown](#shutdown-configuration),
 [Run](#run-configuration),
 [Communicator](#communicator-configuration)
 configuration references, which are
 necessary for this build to succeed and can be found further down the page.
 
-
 ### Optional:
 
-<!-- Code generated from the comments of the Config struct in builder/utm/iso/config.go; DO NOT EDIT MANUALLY -->
-
-- `boot_steps` ([][]string) - This is an array of tuples of boot commands, to type when the virtual
-  machine is booted. The first element of the tuple is the actual boot
-  command. The second element of the tuple, which is optional, is a
-  description of what the boot command does. This is intended to be used for
-  interactive installers that requires many commands to complete the
-  installation. Both the command and the description will be printed when
-  logging is enabled. When debug mode is enabled Packer will pause after
-  typing each boot command. This will make it easier to follow along the
-  installation process and make sure the Packer and the installer are in
-  sync. `boot_steps` and `boot_commands` are mutually exclusive.
-  
-  Example:
-  
-  In HCL:
-  ```hcl
-  boot_steps = [
-    ["1<enter><wait5>", "Install NetBSD"],
-    ["a<enter><wait5>", "Installation messages in English"],
-    ["a<enter><wait5>", "Keyboard type: unchanged"],
-  
-    ["a<enter><wait5>", "Install NetBSD to hard disk"],
-    ["b<enter><wait5>", "Yes"]
-  ]
-  ```
-  
-  In JSON:
-  ```json
-  {
-    "boot_steps": [
-      ["1<enter><wait5>", "Install NetBSD"],
-      ["a<enter><wait5>", "Installation messages in English"],
-      ["a<enter><wait5>", "Keyboard type: unchanged"],
-  
-      ["a<enter><wait5>", "Install NetBSD to hard disk"],
-      ["b<enter><wait5>", "Yes"]
-    ]
-  }
-  ```
-
-- `disk_size` (uint) - The size, in megabytes, of the hard disk to create for the VM. By
-  default, this is 40000 (about 40 GB).
+<!-- Code generated from the comments of the Config struct in builder/utm/cloud/config.go; DO NOT EDIT MANUALLY -->
 
 - `keep_registered` (bool) - Set this to true if you would like to keep the VM registered with
   UTM. Defaults to false.
@@ -110,38 +57,20 @@ necessary for this build to succeed and can be found further down the page.
   if the build output is not the resultant image, but created inside the
   VM.
 
-- `vnc_bind_address` (string) - The IP address that should be
-  binded to for VNC. By default packer will use 127.0.0.1 for this. If you
-  wish to bind to all interfaces use 0.0.0.0.
-
-- `vnc_use_password` (bool) - Whether or not to set a password on the VNC server. This option
-  automatically enables the QMP socket. See `qmp_socket_path`. Defaults to
-  `false`.
-
-- `vnc_port_min` (int) - The minimum and maximum port
-  to use for VNC access to the virtual machine. The builder uses VNC to type
-  the initial boot_command. Because Packer generally runs in parallel,
-  Packer uses a randomly chosen port in this range that appears available. By
-  default this is 5900 to 6000. The minimum and maximum ports are inclusive.
-  The minimum port cannot be set below 5900 due to a quirk in how QEMU parses
-  vnc display address.
-
-- `vnc_port_max` (int) - VNC Port Max
-
 - `vm_arch` (string) - QEMU system architecture of the virtual machine.
-  If this is a QEMU virtual machine, you must specify the architecture
+  For a QEMU virtual machine, you must specify the architecture
   Which is required in confirguration. By default, this is aarch64.
+  You should use same architecture as the cloud image.
 
 - `vm_backend` (string) - Backend to use for the virtual machine.
-  apple : Apple Virtualization.framework backend.
-  qemu : QEMU backend.
+  Only qemu cloud images are supported.
   By default, this is qemu.
 
 - `vm_name` (string) - This is the name of the utm file for the new virtual machine, without
   the file extension. By default this is packer-BUILDNAME, where
   "BUILDNAME" is the name of the build.
 
-<!-- End of code generated from the comments of the Config struct in builder/utm/iso/config.go; -->
+<!-- End of code generated from the comments of the Config struct in builder/utm/cloud/config.go; -->
 
 
 <!-- Code generated from the comments of the UtmVersionConfig struct in builder/utm/common/utm_version_config.go; DO NOT EDIT MANUALLY -->
@@ -154,9 +83,6 @@ necessary for this build to succeed and can be found further down the page.
   can be useful when using the none communicator.
 
 <!-- End of code generated from the comments of the UtmVersionConfig struct in builder/utm/common/utm_version_config.go; -->
-
-
-
 
 
 ### ISO Configuration
@@ -453,173 +379,3 @@ wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/foo/bar/preseed.cfg
   on the host to communicate to the virtual machine.
 
 <!-- End of code generated from the comments of the CommConfig struct in builder/utm/common/comm_config.go; -->
-
-
-
-
-### Boot Configuration
-
-<!-- Code generated from the comments of the BootConfig struct in bootcommand/config.go; DO NOT EDIT MANUALLY -->
-
-The boot configuration is very important: `boot_command` specifies the keys
-to type when the virtual machine is first booted in order to start the OS
-installer. This command is typed after boot_wait, which gives the virtual
-machine some time to actually load.
-
-The boot_command is an array of strings. The strings are all typed in
-sequence. It is an array only to improve readability within the template.
-
-There are a set of special keys available. If these are in your boot
-command, they will be replaced by the proper key:
-
--   `<bs>` - Backspace
-
--   `<del>` - Delete
-
--   `<enter> <return>` - Simulates an actual "enter" or "return" keypress.
-
--   `<esc>` - Simulates pressing the escape key.
-
--   `<tab>` - Simulates pressing the tab key.
-
--   `<f1> - <f12>` - Simulates pressing a function key.
-
--   `<up> <down> <left> <right>` - Simulates pressing an arrow key.
-
--   `<spacebar>` - Simulates pressing the spacebar.
-
--   `<insert>` - Simulates pressing the insert key.
-
--   `<home> <end>` - Simulates pressing the home and end keys.
-
-  - `<pageUp> <pageDown>` - Simulates pressing the page up and page down
-    keys.
-
--   `<menu>` - Simulates pressing the Menu key.
-
--   `<leftAlt> <rightAlt>` - Simulates pressing the alt key.
-
--   `<leftCtrl> <rightCtrl>` - Simulates pressing the ctrl key.
-
--   `<leftShift> <rightShift>` - Simulates pressing the shift key.
-
--   `<leftSuper> <rightSuper>` - Simulates pressing the ⌘ or Windows key.
-
-  - `<wait> <wait5> <wait10>` - Adds a 1, 5 or 10 second pause before
-    sending any additional keys. This is useful if you have to generally
-    wait for the UI to update before typing more.
-
-  - `<waitXX>` - Add an arbitrary pause before sending any additional keys.
-    The format of `XX` is a sequence of positive decimal numbers, each with
-    optional fraction and a unit suffix, such as `300ms`, `1.5h` or `2h45m`.
-    Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`. For
-    example `<wait10m>` or `<wait1m20s>`.
-
-  - `<XXXOn> <XXXOff>` - Any printable keyboard character, and of these
-    "special" expressions, with the exception of the `<wait>` types, can
-    also be toggled on or off. For example, to simulate ctrl+c, use
-    `<leftCtrlOn>c<leftCtrlOff>`. Be sure to release them, otherwise they
-    will be held down until the machine reboots. To hold the `c` key down,
-    you would use `<cOn>`. Likewise, `<cOff>` to release.
-
-  - `{{ .HTTPIP }} {{ .HTTPPort }}` - The IP and port, respectively of an
-    HTTP server that is started serving the directory specified by the
-    `http_directory` configuration parameter. If `http_directory` isn't
-    specified, these will be blank!
-
--   `{{ .Name }}` - The name of the VM.
-
-Example boot command. This is actually a working boot command used to start an
-CentOS 6.4 installer:
-
-In JSON:
-
-```json
-"boot_command": [
-
-	   "<tab><wait>",
-	   " ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos6-ks.cfg<enter>"
-	]
-
-```
-
-In HCL2:
-
-```hcl
-boot_command = [
-
-	   "<tab><wait>",
-	   " ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos6-ks.cfg<enter>"
-	]
-
-```
-
-The example shown below is a working boot command used to start an Ubuntu
-12.04 installer:
-
-In JSON:
-
-```json
-"boot_command": [
-
-	"<esc><esc><enter><wait>",
-	"/install/vmlinuz noapic ",
-	"preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
-	"debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
-	"hostname={{ .Name }} ",
-	"fb=false debconf/frontend=noninteractive ",
-	"keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
-	"keyboard-configuration/variant=USA console-setup/ask_detect=false ",
-	"initrd=/install/initrd.gz -- <enter>"
-
-]
-```
-
-In HCL2:
-
-```hcl
-boot_command = [
-
-	"<esc><esc><enter><wait>",
-	"/install/vmlinuz noapic ",
-	"preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
-	"debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
-	"hostname={{ .Name }} ",
-	"fb=false debconf/frontend=noninteractive ",
-	"keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
-	"keyboard-configuration/variant=USA console-setup/ask_detect=false ",
-	"initrd=/install/initrd.gz -- <enter>"
-
-]
-```
-
-For more examples of various boot commands, see the sample projects from our
-[community templates page](https://packer.io/community-tools#templates).
-
-<!-- End of code generated from the comments of the BootConfig struct in bootcommand/config.go; -->
-
-
-#### Optional:
-
-<!-- Code generated from the comments of the BootConfig struct in bootcommand/config.go; DO NOT EDIT MANUALLY -->
-
-- `boot_keygroup_interval` (duration string | ex: "1h5m2s") - Time to wait after sending a group of key pressses. The value of this
-  should be a duration. Examples are `5s` and `1m30s` which will cause
-  Packer to wait five seconds and one minute 30 seconds, respectively. If
-  this isn't specified, a sensible default value is picked depending on
-  the builder type.
-
-- `boot_wait` (duration string | ex: "1h5m2s") - The time to wait after booting the initial virtual machine before typing
-  the `boot_command`. The value of this should be a duration. Examples are
-  `5s` and `1m30s` which will cause Packer to wait five seconds and one
-  minute 30 seconds, respectively. If this isn't specified, the default is
-  `10s` or 10 seconds. To set boot_wait to 0s, use a negative number, such
-  as "-1s"
-
-- `boot_command` ([]string) - This is an array of commands to type when the virtual machine is first
-  booted. The goal of these commands should be to type just enough to
-  initialize the operating system installer. Special keys can be typed as
-  well, and are covered in the section below on the boot command. If this
-  is not specified, it is assumed the installer will start itself.
-
-<!-- End of code generated from the comments of the BootConfig struct in bootcommand/config.go; -->
