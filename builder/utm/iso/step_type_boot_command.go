@@ -56,17 +56,18 @@ func (*stepTypeBootCommand) Cleanup(multistep.StateBag) {}
 
 func typeBootCommands(ctx context.Context, state multistep.StateBag, bootSteps [][]string) multistep.StepAction {
 	config := state.Get("config").(*Config)
+
+	if config.VNCConfig.DisableVNC {
+		log.Println("Skipping boot command step...")
+		return multistep.ActionContinue
+	}
+
 	debug := state.Get("debug").(bool)
 	httpPort := state.Get("http_port").(int)
 	ui := state.Get("ui").(packersdk.Ui)
 	vncPort := state.Get("vnc_port").(int)
 	vncIP := config.VNCBindAddress
 	vncPassword := state.Get("vnc_password")
-
-	if config.VNCConfig.DisableVNC {
-		log.Println("Skipping boot command step...")
-		return multistep.ActionContinue
-	}
 
 	// Wait the for the vm to boot.
 	if int64(config.BootWait) > 0 {
