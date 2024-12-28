@@ -87,11 +87,9 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		},
 		new(stepCreateVM),
 		// TODO: Make sure ISO is first in the list for boot order
-		// TODO: Add step to create more disk (default disk already created in createVM step)
-		// if more disks are needed then add the following step
-		// new(stepCreateDisk),
+		new(stepCreateDisk),
 		&utmcommon.StepAttachISOs{
-			AttachBootISO:           false, // don't attach boot ISO, Since createVM step already attaches the ISO
+			AttachBootISO:           true, // Attach boot ISO , since CreateVM does not.
 			ISOInterface:            b.config.ISOInterface,
 			GuestAdditionsMode:      b.config.GuestAdditionsMode,
 			GuestAdditionsInterface: b.config.GuestAdditionsInterface,

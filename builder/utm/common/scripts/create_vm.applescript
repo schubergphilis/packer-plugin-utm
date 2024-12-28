@@ -1,8 +1,8 @@
 ---
 -- create_vm.applescript
 -- This script creates a new VM with the specified properties.
--- Usage: osascript create_vm.applescript --name <VM_NAME> --backend <BACKEND> --arch <ARCH> --iso <ISO_PATH> --size <DISK_SIZE>
--- Example: osascript create_vm.applescript --name "MyVM" --backend "QeMu" --arch "aarch64" --iso "/path/to/image.iso" --size 65536
+-- Usage: osascript create_vm.applescript --name <VM_NAME> --backend <BACKEND> --arch <ARCH> 
+-- Example: osascript create_vm.applescript --name "MyVM" --backend "QeMu" --arch "aarch64" 
 on run argv
     -- Initialize variables
     set vmName to ""
@@ -18,25 +18,26 @@ on run argv
             set vmBackend to item (i + 1) of argv as string
         else if currentArg is "--arch" then
             set vmArch to item (i + 1) of argv
-        else if currentArg is "--iso" then
-            set isoPath to POSIX file (POSIX path of item (i + 1) of argv)
-        else if currentArg is "--size" then
-            set diskSize to item (i + 1) of argv
         end if
     end repeat
 
     -- Create a new VM with the specified properties
     tell application "UTM"
-        set vm to make new virtual machine with properties Â
-          { backend:vmBackend, Â
-            configuration:{ Â
-              name:vmName, Â
-              architecture:vmArch, Â
-              drives:{  Â
-                {removable:true, source:isoPath}, Â
-                {guest size:diskSize} Â
-              } Â
-            } Â
-          }
+      set vm to make new virtual machine with properties Â
+        { backend:vmBackend, Â
+          configuration:{ Â
+            name:vmName, Â
+            architecture:vmArch Â
+          } Â
+        }
+      
+      -- UTM by default creates a new VM with iso and disk drives
+      -- Remove all drives to have an empty VM
+      set config to configuration of vm
+      set drives of config to {}
+      update configuration of vm with config
+
+      -- Return the ID of the new VM
+      return id of vm
     end tell
 end run

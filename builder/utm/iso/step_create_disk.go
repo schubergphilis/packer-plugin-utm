@@ -3,6 +3,7 @@ package iso
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -41,7 +42,7 @@ func (s *stepCreateDisk) Run(ctx context.Context, state multistep.StateBag) mult
 		command := []string{
 			"add_drive.applescript", vmId,
 			"--interface", controllerEnumCode,
-			"--size", fmt.Sprintf("%d", diskSizes[i]),
+			"--size", strconv.FormatUint(uint64(diskSizes[i]), 10),
 		}
 		_, err = driver.ExecuteOsaScript(command...)
 		if err != nil {
