@@ -13,6 +13,9 @@ type DriverMock struct {
 	ExecuteOsaErrs   []error
 	ExecuteOsaResult string
 
+	GuestToolsIsoPathCalled bool
+	GuestToolsIsoPathErr    error
+
 	ImportCalled bool
 	ImportId     string
 	ImportPath   string
@@ -54,6 +57,11 @@ func (d *DriverMock) ExecuteOsaScript(command ...string) (string, error) {
 
 func (d *DriverMock) Export(vmId string, path string) error {
 	return nil
+}
+
+func (d *DriverMock) GuestToolsIsoPath() (string, error) {
+	d.GuestToolsIsoPathCalled = true
+	return "", d.GuestToolsIsoPathErr
 }
 
 func (d *DriverMock) Import(path string) (string, error) {

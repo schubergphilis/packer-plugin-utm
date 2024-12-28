@@ -47,7 +47,7 @@ func (s *StepRemoveDevices) Run(ctx context.Context, state multistep.StateBag) m
 		}
 
 		if _, err := driver.ExecuteOsaScript(unmountCommand...); err != nil {
-			err := fmt.Errorf("Error detaching ISO: %s", err)
+			err := fmt.Errorf("error detaching ISO: %s", err)
 			state.Put("error", err)
 			ui.Error(err.Error())
 			return multistep.ActionHalt

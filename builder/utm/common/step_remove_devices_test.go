@@ -42,12 +42,9 @@ func TestStepRemoveDevices_attachedIso(t *testing.T) {
 
 	diskUnmountCommands := map[string][]string{
 		"boot_iso": []string{
-			"storageattach", "myvm",
-			"--storagectl", "IDE Controller",
-			"--port", "0",
-			"--device", "1",
-			"--type", "dvddrive",
-			"--medium", "none",
+			"attach_iso.applescript", "myvm",
+			"--interface", "QdIv",
+			"--source", "/absolute/path/to/iso",
 		},
 	}
 	state.Put("disk_unmount_commands", diskUnmountCommands)
@@ -64,11 +61,11 @@ func TestStepRemoveDevices_attachedIso(t *testing.T) {
 	}
 
 	// Test that ISO was removed
-	if len(driver.UtmctlCalls) != 1 {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if len(driver.ExecuteOsaCalls) != 1 {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
-	if driver.UtmctlCalls[0][3] != "IDE Controller" {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if driver.ExecuteOsaCalls[0][3] != "QdIv" {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
 }
 
@@ -78,12 +75,9 @@ func TestStepRemoveDevices_attachedIsoOnSata(t *testing.T) {
 
 	diskUnmountCommands := map[string][]string{
 		"boot_iso": []string{
-			"storageattach", "myvm",
-			"--storagectl", "SATA Controller",
-			"--port", "0",
-			"--device", "1",
-			"--type", "dvddrive",
-			"--medium", "none",
+			"attach_iso.applescript", "myvm",
+			"--interface", "QdIu",
+			"--source", "/absolute/path/to/iso",
 		},
 	}
 	state.Put("disk_unmount_commands", diskUnmountCommands)
@@ -100,11 +94,11 @@ func TestStepRemoveDevices_attachedIsoOnSata(t *testing.T) {
 	}
 
 	// Test that ISO was removed
-	if len(driver.UtmctlCalls) != 1 {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if len(driver.ExecuteOsaCalls) != 1 {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
-	if driver.UtmctlCalls[0][3] != "SATA Controller" {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if driver.ExecuteOsaCalls[0][3] != "QdIu" {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
 }
 
@@ -126,13 +120,13 @@ func TestStepRemoveDevices_floppyPath(t *testing.T) {
 	}
 
 	// Test that both were removed
-	if len(driver.UtmctlCalls) != 2 {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if len(driver.ExecuteOsaCalls) != 2 {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
-	if driver.UtmctlCalls[0][3] != "Floppy Controller" {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if driver.ExecuteOsaCalls[0][3] != "QdIf" {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
-	if driver.UtmctlCalls[1][3] != "Floppy Controller" {
-		t.Fatalf("bad: %#v", driver.UtmctlCalls)
+	if driver.ExecuteOsaCalls[1][3] != "QdIf" {
+		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
 	}
 }
