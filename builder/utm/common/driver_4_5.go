@@ -96,6 +96,11 @@ func (d *Utm45Driver) Export(vmId string, path string) error {
 	return nil
 }
 
+// UTM 4.5 : doesn't support adding support guest tools
+func (d *Utm45Driver) GuestToolsIsoPath() (string, error) {
+	return "", fmt.Errorf("UTM driver does not provide guest additions")
+}
+
 // UTM 4.5 : We just create a VM shortcut using UTM open command.
 func (d *Utm45Driver) Import(path string) (string, error) {
 	var stdout bytes.Buffer
