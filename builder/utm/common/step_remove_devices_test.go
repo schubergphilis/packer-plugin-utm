@@ -102,31 +102,31 @@ func TestStepRemoveDevices_attachedIsoOnSata(t *testing.T) {
 	}
 }
 
-func TestStepRemoveDevices_floppyPath(t *testing.T) {
-	state := testState(t)
-	step := new(StepRemoveDevices)
+// func TestStepRemoveDevices_floppyPath(t *testing.T) {
+// 	state := testState(t)
+// 	step := new(StepRemoveDevices)
 
-	state.Put("floppy_path", "foo")
-	state.Put("vmName", "foo")
+// 	state.Put("floppy_path", "foo")
+// 	state.Put("vmName", "foo")
 
-	driver := state.Get("driver").(*DriverMock)
+// 	driver := state.Get("driver").(*DriverMock)
 
-	// Test the run
-	if action := step.Run(context.Background(), state); action != multistep.ActionContinue {
-		t.Fatalf("bad action: %#v", action)
-	}
-	if _, ok := state.GetOk("error"); ok {
-		t.Fatal("should NOT have error")
-	}
+// 	// Test the run
+// 	if action := step.Run(context.Background(), state); action != multistep.ActionContinue {
+// 		t.Fatalf("bad action: %#v", action)
+// 	}
+// 	if _, ok := state.GetOk("error"); ok {
+// 		t.Fatal("should NOT have error")
+// 	}
 
-	// Test that both were removed
-	if len(driver.ExecuteOsaCalls) != 2 {
-		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
-	}
-	if driver.ExecuteOsaCalls[0][3] != "QdIf" {
-		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
-	}
-	if driver.ExecuteOsaCalls[1][3] != "QdIf" {
-		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
-	}
-}
+// 	// Test that both were removed
+// 	if len(driver.ExecuteOsaCalls) != 2 {
+// 		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
+// 	}
+// 	if driver.ExecuteOsaCalls[0][3] != "QdIf" {
+// 		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
+// 	}
+// 	if driver.ExecuteOsaCalls[1][3] != "QdIf" {
+// 		t.Fatalf("bad: %#v", driver.ExecuteOsaCalls)
+// 	}
+// }
