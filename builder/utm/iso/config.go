@@ -18,17 +18,33 @@ import (
 
 // Config is the configuration structure for the UTM ISO builder.
 type Config struct {
-	common.PackerConfig        `mapstructure:",squash"`
-	commonsteps.HTTPConfig     `mapstructure:",squash"`
-	commonsteps.ISOConfig      `mapstructure:",squash"`
-	bootcommand.VNCConfig      `mapstructure:",squash"`
-	utmcommon.ExportConfig     `mapstructure:",squash"`
-	utmcommon.OutputConfig     `mapstructure:",squash"`
-	utmcommon.ShutdownConfig   `mapstructure:",squash"`
-	utmcommon.CommConfig       `mapstructure:",squash"`
-	utmcommon.HWConfig         `mapstructure:",squash"`
-	utmcommon.UtmVersionConfig `mapstructure:",squash"`
-	utmcommon.UtmBundleConfig  `mapstructure:",squash"`
+	common.PackerConfig            `mapstructure:",squash"`
+	commonsteps.HTTPConfig         `mapstructure:",squash"`
+	commonsteps.ISOConfig          `mapstructure:",squash"`
+	commonsteps.FloppyConfig       `mapstructure:",squash"`
+	commonsteps.CDConfig           `mapstructure:",squash"`
+	bootcommand.VNCConfig          `mapstructure:",squash"`
+	utmcommon.ExportConfig         `mapstructure:",squash"`
+	utmcommon.OutputConfig         `mapstructure:",squash"`
+	utmcommon.ShutdownConfig       `mapstructure:",squash"`
+	utmcommon.CommConfig           `mapstructure:",squash"`
+	utmcommon.HWConfig             `mapstructure:",squash"`
+	utmcommon.UtmVersionConfig     `mapstructure:",squash"`
+	utmcommon.UtmBundleConfig      `mapstructure:",squash"`
+	utmcommon.GuestAdditionsConfig `mapstructure:",squash"`
+
+	// Set this to true if you would like to use Hypervisor
+	// Defaults to false.
+	Hypervisor bool `mapstructure:"hypervisor" required:"false"`
+
+	// Set this to true if you would like to use UEFI firmware to boot with
+	// UTM. Defaults to false.
+	UEFIBoot bool `mapstructure:"uefi_boot" required:"false"`
+
+	// Set this to true if you would like to use local time for base clock
+	// Defaults to false.
+	// TODO: This is not supported in UTM
+	RTCLocalTime bool `mapstructure:"rtc_local_time" required:"false"`
 
 	// This is an array of tuples of boot commands, to type when the virtual
 	// machine is booted. The first element of the tuple is the actual boot
@@ -72,6 +88,23 @@ type Config struct {
 	// The size, in megabytes, of the hard disk to create for the VM. By
 	// default, this is 40000 (about 40 GB).
 	DiskSize uint `mapstructure:"disk_size" required:"false"`
+	// The type of controller that the primary hard drive is attached to,
+	// defaults to VirtIO. When set to usb, the drive is attached to an USB
+	// controller. When set to scsi, the drive is attached to an  SCSI
+	// controller. When set to nvme, the drive is attached to an NVMe
+	// controller. When set to virtio, the drive is attached to a VirtIO
+	// controller. Please note that when you use "nvme",
+	// and you may need to enable EFI mode for nvme to work (this note is from VirtualBox)
+	HardDriveInterface string `mapstructure:"hard_drive_interface" required:"false"`
+	// The type of controller that the ISO is attached to, defaults to usb.
+	// When set to nvme, the drive is attached to an NVMe controller.
+	// When set to virtio, the drive is attached to a VirtIO controller.
+	ISOInterface string `mapstructure:"iso_interface" required:"false"`
+	// Additional disks to create. Attachment starts at 1 since 0
+	// is the default disk. Each value represents the disk image size in MiB.
+	// Each additional disk uses the same disk parameters as the default disk.
+	// Unset by default.
+	AdditionalDiskSize []uint `mapstructure:"disk_additional_size" required:"false"`
 	// Set this to true if you would like to keep the VM registered with
 	// UTM. Defaults to false.
 	KeepRegistered bool `mapstructure:"keep_registered" required:"false"`
@@ -122,6 +155,8 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 			Exclude: []string{
 				"boot_command",
 				"boot_steps",
+				"guest_additions_path",
+				"guest_additions_url",
 			},
 		},
 	}, raws...)
@@ -139,6 +174,7 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 
 	errs = packersdk.MultiErrorAppend(errs, c.ExportConfig.Prepare(&c.ctx)...)
 	errs = packersdk.MultiErrorAppend(errs, c.ExportConfig.Prepare(&c.ctx)...)
+	errs = packersdk.MultiErrorAppend(errs, c.CDConfig.Prepare(&c.ctx)...)
 	errs = packersdk.MultiErrorAppend(
 		errs, c.OutputConfig.Prepare(&c.ctx, &c.PackerConfig)...)
 	errs = packersdk.MultiErrorAppend(errs, c.HTTPConfig.Prepare(&c.ctx)...)
@@ -150,6 +186,10 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 
 	if c.DiskSize == 0 {
 		c.DiskSize = 40960
+	}
+
+	if c.HardDriveInterface == "" {
+		c.HardDriveInterface = "virtio"
 	}
 
 	if c.VMArch == "" {
@@ -206,6 +246,31 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 		errs = packersdk.MultiErrorAppend(errs,
 			fmt.Errorf("boot_command and boot_steps cannot be used together"))
 	}
+
+	if c.ISOInterface == "" {
+		c.ISOInterface = "usb"
+	}
+
+	if c.GuestAdditionsInterface == "" {
+		c.GuestAdditionsInterface = c.ISOInterface
+	}
+
+	switch c.HardDriveInterface {
+	case "none", "ide", "scsi", "virtio", "nvme", "usb":
+		// do nothing
+	default:
+		errs = packersdk.MultiErrorAppend(
+			errs, errors.New("hard_drive_interface can only be none, ide, scsi, virtio, nvme or usb"))
+	}
+
+	switch c.ISOInterface {
+	case "ide", "sd", "floppy", "virtio", "nvme", "usb":
+		// do nothing
+	default:
+		errs = packersdk.MultiErrorAppend(
+			errs, errors.New("iso_interface can only be ide, sd, floppy, virtio, nvme or usb"))
+	}
+
 	// Warnings
 	if c.ShutdownCommand == "" {
 		warnings = append(warnings,

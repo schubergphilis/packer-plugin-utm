@@ -1,3 +1,8 @@
+---
+-- create_vm.applescript
+-- This script creates a new VM with the specified properties.
+-- Usage: osascript create_vm.applescript --name <VM_NAME> --backend <BACKEND> --arch <ARCH> --iso <ISO_PATH> --size <DISK_SIZE>
+-- Example: osascript create_vm.applescript --name "MyVM" --backend "QeMu" --arch "aarch64" --iso "/path/to/image.iso" --size 65536
 on run argv
     -- Initialize variables
     set vmName to ""

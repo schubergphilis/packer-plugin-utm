@@ -61,6 +61,12 @@ necessary for this build to succeed and can be found further down the page.
 
 <!-- Code generated from the comments of the Config struct in builder/utm/iso/config.go; DO NOT EDIT MANUALLY -->
 
+- `hypervisor` (bool) - Set this to true if you would like to use Hypervisor
+  Defaults to false.
+
+- `uefi_boot` (bool) - Set this to true if you would like to use UEFI firmware to boot with
+  UTM. Defaults to false.
+
 - `boot_steps` ([][]string) - This is an array of tuples of boot commands, to type when the virtual
   machine is booted. The first element of the tuple is the actual boot
   command. The second element of the tuple, which is optional, is a
@@ -102,6 +108,23 @@ necessary for this build to succeed and can be found further down the page.
 
 - `disk_size` (uint) - The size, in megabytes, of the hard disk to create for the VM. By
   default, this is 40000 (about 40 GB).
+
+- `hard_drive_interface` (string) - The type of controller that the primary hard drive is attached to,
+  defaults to VirtIO. When set to usb, the drive is attached to an USB
+  controller. When set to scsi, the drive is attached to an  SCSI
+  controller. When set to nvme, the drive is attached to an NVMe
+  controller. When set to virtio, the drive is attached to a VirtIO
+  controller. Please note that when you use "nvme",
+  and you may need to enable EFI mode for nvme to work (this note is from VirtualBox)
+
+- `iso_interface` (string) - The type of controller that the ISO is attached to, defaults to usb.
+  When set to nvme, the drive is attached to an NVMe controller.
+  When set to virtio, the drive is attached to a VirtIO controller.
+
+- `disk_additional_size` ([]uint) - Additional disks to create. Attachment starts at 1 since 0
+  is the default disk. Each value represents the disk image size in MiB.
+  Each additional disk uses the same disk parameters as the default disk.
+  Unset by default.
 
 - `keep_registered` (bool) - Set this to true if you would like to keep the VM registered with
   UTM. Defaults to false.
