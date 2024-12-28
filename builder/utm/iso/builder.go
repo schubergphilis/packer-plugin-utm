@@ -50,6 +50,12 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 
 	// Build the steps.
 	steps := []multistep.Step{
+		&utmcommon.StepDownloadGuestAdditions{
+			GuestAdditionsMode:   b.config.GuestAdditionsMode,
+			GuestAdditionsURL:    b.config.GuestAdditionsURL,
+			GuestAdditionsSHA256: b.config.GuestAdditionsSHA256,
+			Ctx:                  b.config.ctx,
+		},
 		&commonsteps.StepDownload{
 			Checksum:    b.config.ISOChecksum,
 			Description: "ISO",
@@ -62,6 +68,16 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Force: b.config.PackerForce,
 			Path:  b.config.OutputDir,
 		},
+		&commonsteps.StepCreateFloppy{
+			Files:       b.config.FloppyConfig.FloppyFiles,
+			Directories: b.config.FloppyConfig.FloppyDirectories,
+			Label:       b.config.FloppyConfig.FloppyLabel,
+		},
+		&commonsteps.StepCreateCD{
+			Files:   b.config.CDConfig.CDFiles,
+			Content: b.config.CDConfig.CDContent,
+			Label:   b.config.CDConfig.CDLabel,
+		},
 		new(utmcommon.StepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
 		&utmcommon.StepSshKeyPair{
@@ -70,11 +86,17 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Comm:         &b.config.Comm,
 		},
 		new(stepCreateVM),
-		// if more disk or ISO is needed then add the following steps
+		// TODO: Make sure ISO is first in the list for boot order
+		// TODO: Add step to create more disk (default disk already created in createVM step)
+		// if more disks are needed then add the following step
 		// new(stepCreateDisk),
-		// &utmcommon.StepAttachISOs{
-		// 	AttachBootISO: true,
-		// },
+		&utmcommon.StepAttachISOs{
+			AttachBootISO:           false, // don't attach boot ISO, Since createVM step already attaches the ISO
+			ISOInterface:            b.config.ISOInterface,
+			GuestAdditionsMode:      b.config.GuestAdditionsMode,
+			GuestAdditionsInterface: b.config.GuestAdditionsInterface,
+		},
+		// TODO: add steps to attach Floppy disk
 		&utmcommon.StepPortForwarding{
 			CommConfig:             &b.config.CommConfig.Comm,
 			HostPortMin:            b.config.HostPortMin,
@@ -108,6 +130,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		&utmcommon.StepUploadVersion{
 			Path: *b.config.UtmVersionFile,
 		},
+		// TODO: Add StepUploadGuestAdditions
 		new(commonsteps.StepProvision),
 		&commonsteps.StepCleanupTempKeys{
 			Comm: &b.config.CommConfig.Comm,
@@ -117,6 +140,9 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Timeout:         b.config.ShutdownTimeout,
 			Delay:           b.config.PostShutdownDelay,
 			DisableShutdown: b.config.DisableShutdown,
+		},
+		&utmcommon.StepRemoveDevices{
+			Bundling: b.config.UtmBundleConfig,
 		},
 		&utmcommon.StepPause{
 			Message: "Make required changes to the VM before export.\nRemove display, Add Serial port, Icon, etc.",
