@@ -19,17 +19,25 @@ import (
 //
 // Uses:
 //
-//	config *config
 //	ui     packersdk.Ui
 //
 // Produces:
 //
 //	vnc_port int - The port that VNC is configured to listen on.
 type stepConfigureVNC struct {
+	Enabled            bool
+	VNCBindAddress     string
+	VNCPortMin         int
+	VNCPortMax         int
+	VNCDisablePassword bool
+
 	l *net.Listener
 }
 
-func VNCPassword() string {
+func VNCPassword(skipPassword bool) string {
+	if skipPassword {
+		return ""
+	}
 	length := int(8)
 
 	charSet := []byte("012345689abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -45,7 +53,11 @@ func VNCPassword() string {
 }
 
 func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
-	config := state.Get("config").(*Config)
+	if !s.Enabled {
+		log.Println("[INFO] Skipping VNC configuration step...")
+		return multistep.ActionContinue
+	}
+
 	driver := state.Get("driver").(utmcommon.Driver)
 	ui := state.Get("ui").(packersdk.Ui)
 	vmId := state.Get("vmId").(string)
@@ -53,16 +65,15 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 	// Find an open VNC port. Note that this can still fail later on
 	// because we have to release the port at some point. But this does its
 	// best.
-	msg := fmt.Sprintf("Looking for available port between %d and %d on %s", config.VNCPortMin, config.VNCPortMax, config.VNCBindAddress)
+	msg := fmt.Sprintf("Looking for available port between %d and %d on %s", s.VNCPortMin, s.VNCPortMax, s.VNCBindAddress)
 	ui.Say(msg)
 	log.Print(msg)
 
-	var vncPassword string
 	var err error
 	s.l, err = net.ListenRangeConfig{
-		Addr:    config.VNCBindAddress,
-		Min:     config.VNCPortMin,
-		Max:     config.VNCPortMax,
+		Addr:    s.VNCBindAddress,
+		Min:     s.VNCPortMin,
+		Max:     s.VNCPortMax,
 		Network: "tcp",
 	}.Listen(ctx)
 	if err != nil {
@@ -74,19 +85,15 @@ func (s *stepConfigureVNC) Run(ctx context.Context, state multistep.StateBag) mu
 	s.l.Listener.Close() // free port, but don't unlock lock file
 	vncPort := s.l.Port
 
-	if config.VNCUsePassword {
-		vncPassword = VNCPassword()
-	} else {
-		vncPassword = ""
-	}
+	vncPassword := VNCPassword(s.VNCDisablePassword)
 
-	log.Printf("Found available VNC port: %d on IP: %s", vncPort, config.VNCBindAddress)
+	log.Printf("Found available VNC port: %d on IP: %s", vncPort, s.VNCBindAddress)
 	state.Put("vnc_port", vncPort)
 	state.Put("vnc_password", vncPassword)
 
 	// Add VNC arguments to the VM via Qemu additional arguments.
 	// Send choosen vncPort - 5900 as the VNC port.
-	vncQemuArg := fmt.Sprintf("-vnc %s:%d", config.VNCBindAddress, vncPort-5900)
+	vncQemuArg := fmt.Sprintf("-vnc %s:%d", s.VNCBindAddress, vncPort-5900)
 	addQemuArgsCommand := []string{
 		"add_qemu_additional_args.applescript", vmId,
 		"--args", vncQemuArg,

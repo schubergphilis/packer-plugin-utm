@@ -102,7 +102,13 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			SkipNatMapping:         b.config.SkipNatMapping,
 			ClearNetworkInterfaces: true,
 		},
-		new(stepConfigureVNC),
+		&stepConfigureVNC{
+			Enabled:            !b.config.DisableVNC,
+			VNCBindAddress:     b.config.VNCBindAddress,
+			VNCPortMin:         b.config.VNCPortMin,
+			VNCPortMax:         b.config.VNCPortMax,
+			VNCDisablePassword: !b.config.VNCUsePassword,
+		},
 		&utmcommon.StepPause{
 			Message: "UTM API Unavailable: Add a display device to the VM for VNC to work",
 		},
