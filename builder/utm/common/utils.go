@@ -4,16 +4,16 @@ import "fmt"
 
 // Map of controller names to their corresponding enum codes
 var ControllerEnumMap = map[string]string{
-	"none":   "Qdin",
-	"ide":    "Qdii",
-	"scsi":   "Qdis",
-	"sd":     "Qdid",
-	"mtd":    "Qdim",
-	"floppy": "Qdif",
-	"pflash": "Qdip",
-	"virtio": "Qdiv",
-	"nvme":   "Qdin",
-	"usb":    "Qdiu",
+	"none":   "QdIn",
+	"ide":    "QdIi",
+	"scsi":   "QdIs",
+	"sd":     "QdId",
+	"mtd":    "QdIm",
+	"floppy": "QdIf",
+	"pflash": "QdIp",
+	"virtio": "QdIv",
+	"nvme":   "QdIn",
+	"usb":    "QdIu",
 }
 
 // Function to get the UTM enum code for a given controller name
