@@ -27,6 +27,7 @@ func (s *StepAttachISOs) Run(ctx context.Context, state multistep.StateBag) mult
 
 	ui.Say("Mounting ISOs...")
 	diskMountMap := map[string]string{}
+	s.diskUnmountCommands = map[string][]string{}
 	// Track the bootable iso (only used in utm-iso builder. )
 	if s.AttachBootISO {
 		isoPath := state.Get("iso_path").(string)
