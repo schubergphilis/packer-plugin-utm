@@ -115,15 +115,17 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		&utmcommon.StepRun{},
 		&stepTypeBootCommand{},
 		&utmcommon.StepPause{
-			Message: "Confirm Install is complete and VM is running",
+			Message: "Confirm Install is complete, VM is running with OS installed. (Next steps is connecting to the VM)",
 		},
-		// We stop the VM to remove the ISO file.
-		&utmcommon.StepStopVm{},
-		// After install is complete, remove the ISO file.
-		// Currently no way to identify the ISO driver, so remove the first disk.
-		&stepRemoveFirstDisk{},
-		// We start the VM again for the next steps.
-		&utmcommon.StepRun{},
+		// Below three steps are for VMs that require a reboot after install.
+		// and also the removal of the ISO file.
+		// // We stop the VM to remove the ISO file.
+		// &utmcommon.StepStopVm{},
+		// // After install is complete, remove the ISO file.
+		// // Currently no way to identify the ISO driver, so remove the first disk.
+		// &stepRemoveFirstDisk{},
+		// // We start the VM again for the next steps.
+		// &utmcommon.StepRun{},
 		&communicator.StepConnect{
 			Config:    &b.config.CommConfig.Comm,
 			Host:      utmcommon.CommHost(b.config.CommConfig.Comm.Host()),
