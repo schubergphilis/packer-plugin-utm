@@ -71,7 +71,7 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 		"--memory", strconv.Itoa(config.HWConfig.MemorySize),
 		"--name", vmName,
 		"--uefi-boot", strconv.FormatBool(config.UEFIBoot),
-		"--hypervisor", strconv.FormatBool(config.Hypervisor),
+		"--use-hypervisor", strconv.FormatBool(config.Hypervisor),
 	}
 
 	ui.Say("Customizing virtual machine...")
