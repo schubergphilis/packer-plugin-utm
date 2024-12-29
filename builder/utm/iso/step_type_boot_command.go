@@ -42,6 +42,11 @@ type stepTypeBootCommand struct{}
 
 func (s *stepTypeBootCommand) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
+	if config.VNCConfig.DisableVNC {
+		log.Println("Skipping boot command step...")
+		return multistep.ActionContinue
+	}
+
 	command := config.VNCConfig.FlatBootCommand()
 	bootSteps := config.BootSteps
 
@@ -56,12 +61,6 @@ func (*stepTypeBootCommand) Cleanup(multistep.StateBag) {}
 
 func typeBootCommands(ctx context.Context, state multistep.StateBag, bootSteps [][]string) multistep.StepAction {
 	config := state.Get("config").(*Config)
-
-	if config.VNCConfig.DisableVNC {
-		log.Println("Skipping boot command step...")
-		return multistep.ActionContinue
-	}
-
 	debug := state.Get("debug").(bool)
 	httpPort := state.Get("http_port").(int)
 	ui := state.Get("ui").(packersdk.Ui)
