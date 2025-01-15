@@ -32,6 +32,7 @@ type Config struct {
 	utmcommon.UtmVersionConfig     `mapstructure:",squash"`
 	utmcommon.UtmBundleConfig      `mapstructure:",squash"`
 	utmcommon.GuestAdditionsConfig `mapstructure:",squash"`
+	utmcommon.NoPauseConfig        `mapstructure:",squash"`
 
 	// Set this to true if you would like to use Hypervisor
 	// Defaults to false.

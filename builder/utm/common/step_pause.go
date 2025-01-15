@@ -17,11 +17,17 @@ import (
 
 type StepPause struct {
 	Message string
+	NoPause bool
 }
 
 func (s *StepPause) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	ui := state.Get("ui").(packersdk.Ui)
 
+	if s.NoPause {
+		// If NoPause is enabled, continue without prompting the user
+		ui.Say("NoPause is enabled, continuing without user prompt.")
+		return multistep.ActionContinue
+	}
 	// say and ask user to confirm if the necessary steps are done
 	ui.Say(s.Message)
 	confirmOption, err := ui.Ask("confirm you have done the necessary steps [Y/n]:")
