@@ -62,6 +62,11 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Force: b.config.PackerForce,
 			Path:  b.config.OutputDir,
 		},
+		&commonsteps.StepCreateCD{
+			Files:   b.config.CDConfig.CDFiles,
+			Content: b.config.CDConfig.CDContent,
+			Label:   b.config.CDConfig.CDLabel,
+		},
 		new(utmcommon.StepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
 		&utmcommon.StepSshKeyPair{
@@ -69,7 +74,17 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			DebugKeyPath: fmt.Sprintf("%s.pem", b.config.PackerBuildName),
 			Comm:         &b.config.Comm,
 		},
-		new(stepCreateCloudVM),
+		&utmcommon.StepCreateVM{
+			VMName:         b.config.VMName,
+			VMBackend:      b.config.VMBackend,
+			VMArch:         b.config.VMArch,
+			HWConfig:       b.config.HWConfig,
+			UEFIBoot:       b.config.UEFIBoot,
+			Hypervisor:     b.config.Hypervisor,
+			KeepRegistered: b.config.KeepRegistered,
+		},
+		// This step creates a disk from source (cloud image) and attaches it to the VM
+		new(stepCreateCloudDisk),
 		&utmcommon.StepPortForwarding{
 			CommConfig:             &b.config.CommConfig.Comm,
 			HostPortMin:            b.config.HostPortMin,
@@ -77,7 +92,10 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			SkipNatMapping:         b.config.SkipNatMapping,
 			ClearNetworkInterfaces: true,
 		},
-		new(stepConfigureCloudSeed),
+		// Use this step to pass the cloud-init seed data via cd or http
+		&stepConfigureCloudSeed{
+			useCd: b.config.UseCD,
+		},
 		&utmcommon.StepPause{
 			Message: "UTM API Unavailable: Add a display device to the VM for debugging",
 		},
@@ -104,6 +122,9 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Timeout:         b.config.ShutdownTimeout,
 			Delay:           b.config.PostShutdownDelay,
 			DisableShutdown: b.config.DisableShutdown,
+		},
+		&utmcommon.StepRemoveDevices{
+			Bundling: b.config.UtmBundleConfig,
 		},
 		&utmcommon.StepPause{
 			Message: "Make required changes to the VM before export.\nRemove display, Add Serial port, Icon, etc.",

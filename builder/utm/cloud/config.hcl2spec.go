@@ -29,6 +29,9 @@ type FlatConfig struct {
 	ISOUrls                   []string          `mapstructure:"iso_urls" cty:"iso_urls" hcl:"iso_urls"`
 	TargetPath                *string           `mapstructure:"iso_target_path" cty:"iso_target_path" hcl:"iso_target_path"`
 	TargetExtension           *string           `mapstructure:"iso_target_extension" cty:"iso_target_extension" hcl:"iso_target_extension"`
+	CDFiles                   []string          `mapstructure:"cd_files" cty:"cd_files" hcl:"cd_files"`
+	CDContent                 map[string]string `mapstructure:"cd_content" cty:"cd_content" hcl:"cd_content"`
+	CDLabel                   *string           `mapstructure:"cd_label" cty:"cd_label" hcl:"cd_label"`
 	Format                    *string           `mapstructure:"format" required:"false" cty:"format" hcl:"format"`
 	OutputDir                 *string           `mapstructure:"output_directory" required:"false" cty:"output_directory" hcl:"output_directory"`
 	OutputFilename            *string           `mapstructure:"output_filename" required:"false" cty:"output_filename" hcl:"output_filename"`
@@ -95,6 +98,20 @@ type FlatConfig struct {
 	MemorySize                *int              `mapstructure:"memory" required:"false" cty:"memory" hcl:"memory"`
 	UtmVersionFile            *string           `mapstructure:"utm_version_file" required:"false" cty:"utm_version_file" hcl:"utm_version_file"`
 	BundleISO                 *bool             `mapstructure:"bundle_iso" required:"false" cty:"bundle_iso" hcl:"bundle_iso"`
+	GuestAdditionsMode        *string           `mapstructure:"guest_additions_mode" cty:"guest_additions_mode" hcl:"guest_additions_mode"`
+	GuestAdditionsInterface   *string           `mapstructure:"guest_additions_interface" required:"false" cty:"guest_additions_interface" hcl:"guest_additions_interface"`
+	GuestAdditionsPath        *string           `mapstructure:"guest_additions_path" cty:"guest_additions_path" hcl:"guest_additions_path"`
+	GuestAdditionsSHA256      *string           `mapstructure:"guest_additions_sha256" cty:"guest_additions_sha256" hcl:"guest_additions_sha256"`
+	GuestAdditionsURL         *string           `mapstructure:"guest_additions_url" required:"false" cty:"guest_additions_url" hcl:"guest_additions_url"`
+	Hypervisor                *bool             `mapstructure:"hypervisor" required:"false" cty:"hypervisor" hcl:"hypervisor"`
+	UEFIBoot                  *bool             `mapstructure:"uefi_boot" required:"false" cty:"uefi_boot" hcl:"uefi_boot"`
+	RTCLocalTime              *bool             `mapstructure:"rtc_local_time" required:"false" cty:"rtc_local_time" hcl:"rtc_local_time"`
+	DiskSize                  *uint             `mapstructure:"disk_size" required:"false" cty:"disk_size" hcl:"disk_size"`
+	HardDriveInterface        *string           `mapstructure:"hard_drive_interface" required:"false" cty:"hard_drive_interface" hcl:"hard_drive_interface"`
+	ISOInterface              *string           `mapstructure:"iso_interface" required:"false" cty:"iso_interface" hcl:"iso_interface"`
+	AdditionalDiskSize        []uint            `mapstructure:"disk_additional_size" required:"false" cty:"disk_additional_size" hcl:"disk_additional_size"`
+	ResizeCloudImage          *bool             `mapstructure:"resize_cloud_image" required:"false" cty:"resize_cloud_image" hcl:"resize_cloud_image"`
+	UseCD                     *bool             `mapstructure:"use_cd" required:"false" cty:"use_cd" hcl:"use_cd"`
 	KeepRegistered            *bool             `mapstructure:"keep_registered" required:"false" cty:"keep_registered" hcl:"keep_registered"`
 	SkipExport                *bool             `mapstructure:"skip_export" required:"false" cty:"skip_export" hcl:"skip_export"`
 	VMArch                    *string           `mapstructure:"vm_arch" required:"false" cty:"vm_arch" hcl:"vm_arch"`
@@ -133,6 +150,9 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"iso_urls":                     &hcldec.AttrSpec{Name: "iso_urls", Type: cty.List(cty.String), Required: false},
 		"iso_target_path":              &hcldec.AttrSpec{Name: "iso_target_path", Type: cty.String, Required: false},
 		"iso_target_extension":         &hcldec.AttrSpec{Name: "iso_target_extension", Type: cty.String, Required: false},
+		"cd_files":                     &hcldec.AttrSpec{Name: "cd_files", Type: cty.List(cty.String), Required: false},
+		"cd_content":                   &hcldec.AttrSpec{Name: "cd_content", Type: cty.Map(cty.String), Required: false},
+		"cd_label":                     &hcldec.AttrSpec{Name: "cd_label", Type: cty.String, Required: false},
 		"format":                       &hcldec.AttrSpec{Name: "format", Type: cty.String, Required: false},
 		"output_directory":             &hcldec.AttrSpec{Name: "output_directory", Type: cty.String, Required: false},
 		"output_filename":              &hcldec.AttrSpec{Name: "output_filename", Type: cty.String, Required: false},
@@ -199,6 +219,20 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"memory":                       &hcldec.AttrSpec{Name: "memory", Type: cty.Number, Required: false},
 		"utm_version_file":             &hcldec.AttrSpec{Name: "utm_version_file", Type: cty.String, Required: false},
 		"bundle_iso":                   &hcldec.AttrSpec{Name: "bundle_iso", Type: cty.Bool, Required: false},
+		"guest_additions_mode":         &hcldec.AttrSpec{Name: "guest_additions_mode", Type: cty.String, Required: false},
+		"guest_additions_interface":    &hcldec.AttrSpec{Name: "guest_additions_interface", Type: cty.String, Required: false},
+		"guest_additions_path":         &hcldec.AttrSpec{Name: "guest_additions_path", Type: cty.String, Required: false},
+		"guest_additions_sha256":       &hcldec.AttrSpec{Name: "guest_additions_sha256", Type: cty.String, Required: false},
+		"guest_additions_url":          &hcldec.AttrSpec{Name: "guest_additions_url", Type: cty.String, Required: false},
+		"hypervisor":                   &hcldec.AttrSpec{Name: "hypervisor", Type: cty.Bool, Required: false},
+		"uefi_boot":                    &hcldec.AttrSpec{Name: "uefi_boot", Type: cty.Bool, Required: false},
+		"rtc_local_time":               &hcldec.AttrSpec{Name: "rtc_local_time", Type: cty.Bool, Required: false},
+		"disk_size":                    &hcldec.AttrSpec{Name: "disk_size", Type: cty.Number, Required: false},
+		"hard_drive_interface":         &hcldec.AttrSpec{Name: "hard_drive_interface", Type: cty.String, Required: false},
+		"iso_interface":                &hcldec.AttrSpec{Name: "iso_interface", Type: cty.String, Required: false},
+		"disk_additional_size":         &hcldec.AttrSpec{Name: "disk_additional_size", Type: cty.List(cty.Number), Required: false},
+		"resize_cloud_image":           &hcldec.AttrSpec{Name: "resize_cloud_image", Type: cty.Bool, Required: false},
+		"use_cd":                       &hcldec.AttrSpec{Name: "use_cd", Type: cty.Bool, Required: false},
 		"keep_registered":              &hcldec.AttrSpec{Name: "keep_registered", Type: cty.Bool, Required: false},
 		"skip_export":                  &hcldec.AttrSpec{Name: "skip_export", Type: cty.Bool, Required: false},
 		"vm_arch":                      &hcldec.AttrSpec{Name: "vm_arch", Type: cty.String, Required: false},
