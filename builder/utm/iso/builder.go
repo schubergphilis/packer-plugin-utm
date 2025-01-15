@@ -50,6 +50,12 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 
 	// Build the steps.
 	steps := []multistep.Step{
+		&utmcommon.StepDownloadGuestAdditions{
+			GuestAdditionsMode:   b.config.GuestAdditionsMode,
+			GuestAdditionsURL:    b.config.GuestAdditionsURL,
+			GuestAdditionsSHA256: b.config.GuestAdditionsSHA256,
+			Ctx:                  b.config.ctx,
+		},
 		&commonsteps.StepDownload{
 			Checksum:    b.config.ISOChecksum,
 			Description: "ISO",
@@ -62,6 +68,16 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Force: b.config.PackerForce,
 			Path:  b.config.OutputDir,
 		},
+		&commonsteps.StepCreateFloppy{
+			Files:       b.config.FloppyConfig.FloppyFiles,
+			Directories: b.config.FloppyConfig.FloppyDirectories,
+			Label:       b.config.FloppyConfig.FloppyLabel,
+		},
+		&commonsteps.StepCreateCD{
+			Files:   b.config.CDConfig.CDFiles,
+			Content: b.config.CDConfig.CDContent,
+			Label:   b.config.CDConfig.CDLabel,
+		},
 		new(utmcommon.StepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
 		&utmcommon.StepSshKeyPair{
@@ -70,11 +86,15 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Comm:         &b.config.Comm,
 		},
 		new(stepCreateVM),
-		// if more disk or ISO is needed then add the following steps
-		// new(stepCreateDisk),
-		// &utmcommon.StepAttachISOs{
-		// 	AttachBootISO: true,
-		// },
+		// TODO: Make sure ISO is first in the list for boot order
+		new(stepCreateDisk),
+		&utmcommon.StepAttachISOs{
+			AttachBootISO:           true, // Attach boot ISO , since CreateVM does not.
+			ISOInterface:            b.config.ISOInterface,
+			GuestAdditionsMode:      b.config.GuestAdditionsMode,
+			GuestAdditionsInterface: b.config.GuestAdditionsInterface,
+		},
+		// TODO: add steps to attach Floppy disk
 		&utmcommon.StepPortForwarding{
 			CommConfig:             &b.config.CommConfig.Comm,
 			HostPortMin:            b.config.HostPortMin,
@@ -82,22 +102,30 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			SkipNatMapping:         b.config.SkipNatMapping,
 			ClearNetworkInterfaces: true,
 		},
-		new(stepConfigureVNC),
+		&stepConfigureVNC{
+			Enabled:            !b.config.DisableVNC,
+			VNCBindAddress:     b.config.VNCBindAddress,
+			VNCPortMin:         b.config.VNCPortMin,
+			VNCPortMax:         b.config.VNCPortMax,
+			VNCDisablePassword: !b.config.VNCUsePassword,
+		},
 		&utmcommon.StepPause{
 			Message: "UTM API Unavailable: Add a display device to the VM for VNC to work",
 		},
 		&utmcommon.StepRun{},
 		&stepTypeBootCommand{},
 		&utmcommon.StepPause{
-			Message: "Confirm Install is complete and VM is running",
+			Message: "Confirm Install is complete, VM is running with OS installed. (Next steps is connecting to the VM)",
 		},
-		// We stop the VM to remove the ISO file.
-		&utmcommon.StepStopVm{},
-		// After install is complete, remove the ISO file.
-		// Currently no way to identify the ISO driver, so remove the first disk.
-		&stepRemoveFirstDisk{},
-		// We start the VM again for the next steps.
-		&utmcommon.StepRun{},
+		// Below three steps are for VMs that require a reboot after install.
+		// and also the removal of the ISO file.
+		// // We stop the VM to remove the ISO file.
+		// &utmcommon.StepStopVm{},
+		// // After install is complete, remove the ISO file.
+		// // Currently no way to identify the ISO driver, so remove the first disk.
+		// &stepRemoveFirstDisk{},
+		// // We start the VM again for the next steps.
+		// &utmcommon.StepRun{},
 		&communicator.StepConnect{
 			Config:    &b.config.CommConfig.Comm,
 			Host:      utmcommon.CommHost(b.config.CommConfig.Comm.Host()),
@@ -108,6 +136,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		&utmcommon.StepUploadVersion{
 			Path: *b.config.UtmVersionFile,
 		},
+		// TODO: Add StepUploadGuestAdditions
 		new(commonsteps.StepProvision),
 		&commonsteps.StepCleanupTempKeys{
 			Comm: &b.config.CommConfig.Comm,
@@ -117,6 +146,9 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Timeout:         b.config.ShutdownTimeout,
 			Delay:           b.config.PostShutdownDelay,
 			DisableShutdown: b.config.DisableShutdown,
+		},
+		&utmcommon.StepRemoveDevices{
+			Bundling: b.config.UtmBundleConfig,
 		},
 		&utmcommon.StepPause{
 			Message: "Make required changes to the VM before export.\nRemove display, Add Serial port, Icon, etc.",

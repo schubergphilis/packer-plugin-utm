@@ -35,6 +35,9 @@ type Driver interface {
 	// Checks if the VM with the given id is running.
 	IsRunning(string) (bool, error)
 
+	// Get guest tools iso path
+	GuestToolsIsoPath() (string, error)
+
 	// Stop stops a running machine, forcefully.
 	Stop(string) error
 

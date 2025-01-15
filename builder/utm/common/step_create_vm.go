@@ -1,4 +1,4 @@
-package cloud
+package common
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
-	utmcommon "github.com/naveenrajm7/packer-plugin-utm/builder/utm/common"
 )
 
 // This step creates the actual virtual machine.
@@ -17,24 +16,28 @@ import (
 // Produces:
 //
 //	vmId string - The UUID of the VM
-type stepCreateCloudVM struct {
+type StepCreateVM struct {
+	// takes
+	VMName         string
+	VMBackend      string
+	VMArch         string
+	HWConfig       HWConfig
+	UEFIBoot       bool
+	Hypervisor     bool
+	KeepRegistered bool
+	// produces
 	vmId string
 }
 
-func (s *stepCreateCloudVM) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
-	config := state.Get("config").(*Config)
-	driver := state.Get("driver").(utmcommon.Driver)
+func (s *StepCreateVM) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
+	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
-
-	vmName := config.VMName
-	isoPath := state.Get("iso_path").(string)
 
 	// Create VM command
 	createCommand := []string{
-		"create_vm_from_source.applescript", "--name", vmName,
-		"--backend", config.VMBackend,
-		"--arch", config.VMArch,
-		"--source", isoPath,
+		"create_vm.applescript", "--name", s.VMName,
+		"--backend", s.VMBackend,
+		"--arch", s.VMArch,
 	}
 
 	ui.Say("Creating virtual machine...")
@@ -46,16 +49,15 @@ func (s *stepCreateCloudVM) Run(ctx context.Context, state multistep.StateBag) m
 		return multistep.ActionHalt
 	}
 
-	// Regular expression to capture the VM ID
-	re := regexp.MustCompile(`virtual machine id ([A-F0-9-]+)`)
+	// Regular expression to capture the VM UUID
+	re := regexp.MustCompile(`[0-9a-fA-F-]{36}`)
 	matches := re.FindStringSubmatch(output)
 	var vmId string
-	if len(matches) > 1 {
-		vmId = matches[1] // Capture the VM ID
+	if len(matches) > 0 {
+		vmId = matches[0] // Capture the VM UUID
 		s.vmId = vmId
+		state.Put("vmName", s.VMName)
 		state.Put("vmId", s.vmId)
-		// save the vm name, used in export step
-		state.Put("vmName", vmName)
 	} else {
 		err := fmt.Errorf("error extracting VM ID from output: %s", output)
 		state.Put("error", err)
@@ -68,9 +70,11 @@ func (s *stepCreateCloudVM) Run(ctx context.Context, state multistep.StateBag) m
 	// Customize VM command
 	customizeCommand := []string{
 		"customize_vm.applescript", vmId,
-		"--cpus", strconv.Itoa(config.HWConfig.CpuCount),
-		"--memory", strconv.Itoa(config.HWConfig.MemorySize),
-		"--name", vmName,
+		"--cpus", strconv.Itoa(s.HWConfig.CpuCount),
+		"--memory", strconv.Itoa(s.HWConfig.MemorySize),
+		"--name", s.VMName,
+		"--uefi-boot", strconv.FormatBool(s.UEFIBoot),
+		"--use-hypervisor", strconv.FormatBool(s.Hypervisor),
 	}
 
 	ui.Say("Customizing virtual machine...")
@@ -85,18 +89,17 @@ func (s *stepCreateCloudVM) Run(ctx context.Context, state multistep.StateBag) m
 	return multistep.ActionContinue
 }
 
-func (s *stepCreateCloudVM) Cleanup(state multistep.StateBag) {
+func (s *StepCreateVM) Cleanup(state multistep.StateBag) {
 	if s.vmId == "" {
 		return
 	}
 
-	driver := state.Get("driver").(utmcommon.Driver)
+	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
-	config := state.Get("config").(*Config)
 
 	_, cancelled := state.GetOk(multistep.StateCancelled)
 	_, halted := state.GetOk(multistep.StateHalted)
-	if (config.KeepRegistered) && (!cancelled && !halted) {
+	if (s.KeepRegistered) && (!cancelled && !halted) {
 		ui.Say("Keeping virtual machine registered with UTM host (keep_registered = true)")
 		return
 	}

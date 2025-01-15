@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 )
 
@@ -60,4 +62,17 @@ func (d *Utm46Driver) Export(vmId string, path string) error {
 	log.Printf("Export output: %s", stdout.String())
 
 	return nil
+}
+
+// Return the downloaded guest tools path if available.
+func (d *Utm46Driver) GuestToolsIsoPath() (string, error) {
+	// The default path to the guest tools, where UTM downloads it
+	guestToolsPath := filepath.Join(os.Getenv("HOME"), "Library/Containers/com.utmapp.UTM/Data/Library/Application Support/GuestSupportTools/utm-guest-tools-latest.iso")
+
+	// Check if the file exists
+	if _, err := os.Stat(guestToolsPath); os.IsNotExist(err) {
+		return "", fmt.Errorf("guest tools ISO not found at path: %s", guestToolsPath)
+	}
+
+	return guestToolsPath, nil
 }

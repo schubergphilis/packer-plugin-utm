@@ -42,6 +42,11 @@ type stepTypeBootCommand struct{}
 
 func (s *stepTypeBootCommand) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
+	if config.VNCConfig.DisableVNC {
+		log.Println("Skipping boot command step...")
+		return multistep.ActionContinue
+	}
+
 	command := config.VNCConfig.FlatBootCommand()
 	bootSteps := config.BootSteps
 
@@ -62,11 +67,6 @@ func typeBootCommands(ctx context.Context, state multistep.StateBag, bootSteps [
 	vncPort := state.Get("vnc_port").(int)
 	vncIP := config.VNCBindAddress
 	vncPassword := state.Get("vnc_password")
-
-	if config.VNCConfig.DisableVNC {
-		log.Println("Skipping boot command step...")
-		return multistep.ActionContinue
-	}
 
 	// Wait the for the vm to boot.
 	if int64(config.BootWait) > 0 {

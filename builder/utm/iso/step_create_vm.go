@@ -28,15 +28,12 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 	ui := state.Get("ui").(packersdk.Ui)
 
 	vmName := config.VMName
-	isoPath := state.Get("iso_path").(string)
 
 	// Create VM command
 	createCommand := []string{
 		"create_vm.applescript", "--name", vmName,
 		"--backend", config.VMBackend,
 		"--arch", config.VMArch,
-		"--iso", isoPath,
-		"--size", strconv.FormatUint(uint64(config.DiskSize), 10),
 	}
 
 	ui.Say("Creating virtual machine...")
@@ -48,12 +45,12 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 		return multistep.ActionHalt
 	}
 
-	// Regular expression to capture the VM ID
-	re := regexp.MustCompile(`virtual machine id ([A-F0-9-]+)`)
+	// Regular expression to capture the VM UUID
+	re := regexp.MustCompile(`[0-9a-fA-F-]{36}`)
 	matches := re.FindStringSubmatch(output)
 	var vmId string
-	if len(matches) > 1 {
-		vmId = matches[1] // Capture the VM ID
+	if len(matches) > 0 {
+		vmId = matches[0] // Capture the VM UUID
 		s.vmName = vmName
 		s.vmId = vmId
 		state.Put("vmName", s.vmName)
@@ -73,6 +70,8 @@ func (s *stepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 		"--cpus", strconv.Itoa(config.HWConfig.CpuCount),
 		"--memory", strconv.Itoa(config.HWConfig.MemorySize),
 		"--name", vmName,
+		"--uefi-boot", strconv.FormatBool(config.UEFIBoot),
+		"--use-hypervisor", strconv.FormatBool(config.Hypervisor),
 	}
 
 	ui.Say("Customizing virtual machine...")
