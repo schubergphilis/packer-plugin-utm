@@ -12,10 +12,15 @@ import (
 // Temporary configuration to disable the pause step
 // Once the pause step is removed, this configuration will be removed as well
 type NoPauseConfig struct {
-	// If true, the build process will not pause to prompt the user to confirm
+	// If true, the build process will not pause to add display.
+	// false by default
 	DisplayNoPause bool `mapstructure:"display_nopause" required:"false"`
-	BootNoPause    bool `mapstructure:"boot_nopause" required:"false"`
-	ExportNoPause  bool `mapstructure:"export_nopause" required:"false"`
+	// If true, the build process will not pause to confirm successful boot.
+	// false by default
+	BootNoPause bool `mapstructure:"boot_nopause" required:"false"`
+	// If true, the build process will not pause to allow pre-export steps.
+	// false by default
+	ExportNoPause bool `mapstructure:"export_nopause" required:"false"`
 }
 
 func (c *NoPauseConfig) Prepare(ctx *interpolate.Context) []error {
