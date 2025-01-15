@@ -85,7 +85,15 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			DebugKeyPath: fmt.Sprintf("%s.pem", b.config.PackerBuildName),
 			Comm:         &b.config.Comm,
 		},
-		new(stepCreateVM),
+		&utmcommon.StepCreateVM{
+			VMName:         b.config.VMName,
+			VMBackend:      b.config.VMBackend,
+			VMArch:         b.config.VMArch,
+			HWConfig:       b.config.HWConfig,
+			UEFIBoot:       b.config.UEFIBoot,
+			Hypervisor:     b.config.Hypervisor,
+			KeepRegistered: b.config.KeepRegistered,
+		},
 		// TODO: Make sure ISO is first in the list for boot order
 		new(stepCreateDisk),
 		&utmcommon.StepAttachISOs{
@@ -111,11 +119,13 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		},
 		&utmcommon.StepPause{
 			Message: "UTM API Unavailable: Add a display device to the VM for VNC to work",
+			NoPause: b.config.DisplayNoPause,
 		},
 		&utmcommon.StepRun{},
 		&stepTypeBootCommand{},
 		&utmcommon.StepPause{
 			Message: "Confirm Install is complete, VM is running with OS installed. (Next steps is connecting to the VM)",
+			NoPause: b.config.BootNoPause,
 		},
 		// Below three steps are for VMs that require a reboot after install.
 		// and also the removal of the ISO file.
@@ -152,6 +162,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		},
 		&utmcommon.StepPause{
 			Message: "Make required changes to the VM before export.\nRemove display, Add Serial port, Icon, etc.",
+			NoPause: b.config.ExportNoPause,
 		},
 		&utmcommon.StepExport{
 			Format:         b.config.Format,
