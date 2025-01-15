@@ -375,6 +375,90 @@ wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/foo/bar/preseed.cfg
 <!-- End of code generated from the comments of the HTTPConfig struct in multistep/commonsteps/http_config.go; -->
 
 
+### CD configuration
+
+<!-- Code generated from the comments of the CDConfig struct in multistep/commonsteps/extra_iso_config.go; DO NOT EDIT MANUALLY -->
+
+An iso (CD) containing custom files can be made available for your build.
+
+By default, no extra CD will be attached. All files listed in this setting
+get placed into the root directory of the CD and the CD is attached as the
+second CD device.
+
+This config exists to work around modern operating systems that have no
+way to mount floppy disks, which was our previous go-to for adding files at
+boot time.
+
+<!-- End of code generated from the comments of the CDConfig struct in multistep/commonsteps/extra_iso_config.go; -->
+
+
+#### Optional:
+
+<!-- Code generated from the comments of the CDConfig struct in multistep/commonsteps/extra_iso_config.go; DO NOT EDIT MANUALLY -->
+
+- `cd_files` ([]string) - A list of files to place onto a CD that is attached when the VM is
+  booted. This can include either files or directories; any directories
+  will be copied onto the CD recursively, preserving directory structure
+  hierarchy. Symlinks will have the link's target copied into the directory
+  tree on the CD where the symlink was. File globbing is allowed.
+  
+  Usage example (JSON):
+  
+  ```json
+  "cd_files": ["./somedirectory/meta-data", "./somedirectory/user-data"],
+  "cd_label": "cidata",
+  ```
+  
+  Usage example (HCL):
+  
+  ```hcl
+  cd_files = ["./somedirectory/meta-data", "./somedirectory/user-data"]
+  cd_label = "cidata"
+  ```
+  
+  The above will create a CD with two files, user-data and meta-data in the
+  CD root. This specific example is how you would create a CD that can be
+  used for an Ubuntu 20.04 autoinstall.
+  
+  Since globbing is also supported,
+  
+  ```hcl
+  cd_files = ["./somedirectory/*"]
+  cd_label = "cidata"
+  ```
+  
+  Would also be an acceptable way to define the above cd. The difference
+  between providing the directory with or without the glob is whether the
+  directory itself or its contents will be at the CD root.
+  
+  Use of this option assumes that you have a command line tool installed
+  that can handle the iso creation. Packer will use one of the following
+  tools:
+  
+    * xorriso
+    * mkisofs
+    * hdiutil (normally found in macOS)
+    * oscdimg (normally found in Windows as part of the Windows ADK)
+
+- `cd_content` (map[string]string) - Key/Values to add to the CD. The keys represent the paths, and the values
+  contents. It can be used alongside `cd_files`, which is useful to add large
+  files without loading them into memory. If any paths are specified by both,
+  the contents in `cd_content` will take precedence.
+  
+  Usage example (HCL):
+  
+  ```hcl
+  cd_files = ["vendor-data"]
+  cd_content = {
+    "meta-data" = jsonencode(local.instance_data)
+    "user-data" = templatefile("user-data", { packages = ["nginx"] })
+  }
+  cd_label = "cidata"
+  ```
+
+- `cd_label` (string) - CD Label
+
+<!-- End of code generated from the comments of the CDConfig struct in multistep/commonsteps/extra_iso_config.go; -->
 
 
 ### Export configuration
@@ -423,6 +507,21 @@ wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/foo/bar/preseed.cfg
   The timeout can be changed using `shutdown_timeout` option.
 
 <!-- End of code generated from the comments of the ShutdownConfig struct in builder/utm/common/shutdown_config.go; -->
+
+
+### Hardware configuration
+
+#### Optional:
+
+<!-- Code generated from the comments of the HWConfig struct in builder/utm/common/hw_config.go; DO NOT EDIT MANUALLY -->
+
+- `cpus` (int) - The number of cpus to use for building the VM.
+  Defaults to 1.
+
+- `memory` (int) - The amount of memory to use for building the VM
+  in megabytes. Defaults to 512 megabytes.
+
+<!-- End of code generated from the comments of the HWConfig struct in builder/utm/common/hw_config.go; -->
 
 
 ### Communicator configuration
