@@ -85,7 +85,15 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			DebugKeyPath: fmt.Sprintf("%s.pem", b.config.PackerBuildName),
 			Comm:         &b.config.Comm,
 		},
-		new(stepCreateVM),
+		&utmcommon.StepCreateVM{
+			VMName:         b.config.VMName,
+			VMBackend:      b.config.VMBackend,
+			VMArch:         b.config.VMArch,
+			HWConfig:       b.config.HWConfig,
+			UEFIBoot:       b.config.UEFIBoot,
+			Hypervisor:     b.config.Hypervisor,
+			KeepRegistered: b.config.KeepRegistered,
+		},
 		// TODO: Make sure ISO is first in the list for boot order
 		new(stepCreateDisk),
 		&utmcommon.StepAttachISOs{
