@@ -26,8 +26,8 @@ Run
 * Update plugin version at `version/version.go`
 * `go mod tidy`
 * make test
-* `git add go.mod go.sum`
+* `git add version/version.go go.mod go.sum`
 * `git commit -m "Update example.com/package to vX.Y.Z"`
 * `git tag vX.Y.Z`
-* push git tag
+* `git push origin vX.Y.Z`
 * GHA will create a release with binaries
