@@ -62,7 +62,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			Force: b.config.PackerForce,
 			Path:  b.config.OutputDir,
 		},
-		&commonsteps.StepCreateCD{
+		&StepCreateCD{
 			Files:   b.config.CDConfig.CDFiles,
 			Content: b.config.CDConfig.CDContent,
 			Label:   b.config.CDConfig.CDLabel,
@@ -98,10 +98,12 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		},
 		&utmcommon.StepPause{
 			Message: "UTM API Unavailable: Add a display device to the VM for debugging",
+			NoPause: b.config.DisplayNoPause,
 		},
 		&utmcommon.StepRun{},
 		&utmcommon.StepPause{
 			Message: "Confirm initial boot with cloud-init is complete and VM is running",
+			NoPause: b.config.BootNoPause,
 		},
 		&communicator.StepConnect{
 			Config:    &b.config.CommConfig.Comm,
@@ -128,6 +130,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		},
 		&utmcommon.StepPause{
 			Message: "Make required changes to the VM before export.\nRemove display, Add Serial port, Icon, etc.",
+			NoPause: b.config.ExportNoPause,
 		},
 		&utmcommon.StepExport{
 			Format:         b.config.Format,
