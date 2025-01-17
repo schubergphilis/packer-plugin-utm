@@ -155,13 +155,14 @@ var supportedCDISOCreationCommands []cdISOCreationCommand = []cdISOCreationComma
 				source)
 		},
 	},
+	// TODO: Create a config flag to enable/disable -hfs
 	{
 		"hdiutil", func(path string, label string, source string, dest string) *exec.Cmd {
 			return exec.Command(
 				path,
 				"makehybrid",
 				"-o", dest,
-				"-hfs",
+				// "-hfs",
 				"-joliet",
 				"-iso",
 				"-default-volume-name", label,
