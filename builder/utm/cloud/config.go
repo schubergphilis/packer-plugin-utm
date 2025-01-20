@@ -133,6 +133,7 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	errs = packersdk.MultiErrorAppend(errs, c.CommConfig.Prepare(&c.ctx)...)
 	errs = packersdk.MultiErrorAppend(errs, c.UtmBundleConfig.Prepare(&c.ctx)...)
 	errs = packersdk.MultiErrorAppend(errs, c.UtmVersionConfig.Prepare(c.CommConfig.Comm.Type)...)
+	errs = packersdk.MultiErrorAppend(errs, c.NoPauseConfig.Prepare(&c.ctx)...)
 
 	if c.DiskSize == 0 {
 		c.DiskSize = 40960

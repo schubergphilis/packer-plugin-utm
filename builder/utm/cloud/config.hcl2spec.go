@@ -103,6 +103,9 @@ type FlatConfig struct {
 	GuestAdditionsPath        *string           `mapstructure:"guest_additions_path" cty:"guest_additions_path" hcl:"guest_additions_path"`
 	GuestAdditionsSHA256      *string           `mapstructure:"guest_additions_sha256" cty:"guest_additions_sha256" hcl:"guest_additions_sha256"`
 	GuestAdditionsURL         *string           `mapstructure:"guest_additions_url" required:"false" cty:"guest_additions_url" hcl:"guest_additions_url"`
+	DisplayNoPause            *bool             `mapstructure:"display_nopause" required:"false" cty:"display_nopause" hcl:"display_nopause"`
+	BootNoPause               *bool             `mapstructure:"boot_nopause" required:"false" cty:"boot_nopause" hcl:"boot_nopause"`
+	ExportNoPause             *bool             `mapstructure:"export_nopause" required:"false" cty:"export_nopause" hcl:"export_nopause"`
 	Hypervisor                *bool             `mapstructure:"hypervisor" required:"false" cty:"hypervisor" hcl:"hypervisor"`
 	UEFIBoot                  *bool             `mapstructure:"uefi_boot" required:"false" cty:"uefi_boot" hcl:"uefi_boot"`
 	RTCLocalTime              *bool             `mapstructure:"rtc_local_time" required:"false" cty:"rtc_local_time" hcl:"rtc_local_time"`
@@ -224,6 +227,9 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"guest_additions_path":         &hcldec.AttrSpec{Name: "guest_additions_path", Type: cty.String, Required: false},
 		"guest_additions_sha256":       &hcldec.AttrSpec{Name: "guest_additions_sha256", Type: cty.String, Required: false},
 		"guest_additions_url":          &hcldec.AttrSpec{Name: "guest_additions_url", Type: cty.String, Required: false},
+		"display_nopause":              &hcldec.AttrSpec{Name: "display_nopause", Type: cty.Bool, Required: false},
+		"boot_nopause":                 &hcldec.AttrSpec{Name: "boot_nopause", Type: cty.Bool, Required: false},
+		"export_nopause":               &hcldec.AttrSpec{Name: "export_nopause", Type: cty.Bool, Required: false},
 		"hypervisor":                   &hcldec.AttrSpec{Name: "hypervisor", Type: cty.Bool, Required: false},
 		"uefi_boot":                    &hcldec.AttrSpec{Name: "uefi_boot", Type: cty.Bool, Required: false},
 		"rtc_local_time":               &hcldec.AttrSpec{Name: "rtc_local_time", Type: cty.Bool, Required: false},

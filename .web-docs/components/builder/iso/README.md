@@ -745,3 +745,30 @@ For more examples of various boot commands, see the sample projects from our
   is not specified, it is assumed the installer will start itself.
 
 <!-- End of code generated from the comments of the BootConfig struct in bootcommand/config.go; -->
+
+
+
+### No Pause configuration
+
+<!-- Code generated from the comments of the NoPauseConfig struct in builder/utm/common/nopause_config.go; DO NOT EDIT MANUALLY -->
+
+Temporary configuration to disable the pause step
+Once the pause step is removed, this configuration will be removed as well
+
+<!-- End of code generated from the comments of the NoPauseConfig struct in builder/utm/common/nopause_config.go; -->
+
+
+#### Optional:
+
+<!-- Code generated from the comments of the NoPauseConfig struct in builder/utm/common/nopause_config.go; DO NOT EDIT MANUALLY -->
+
+- `display_nopause` (bool) - If true, the build process will not pause to add display.
+  false by default
+
+- `boot_nopause` (bool) - If true, the build process will not pause to confirm successful boot.
+  false by default
+
+- `export_nopause` (bool) - If true, the build process will not pause to allow pre-export steps.
+  false by default
+
+<!-- End of code generated from the comments of the NoPauseConfig struct in builder/utm/common/nopause_config.go; -->
