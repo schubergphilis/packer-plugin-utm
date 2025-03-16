@@ -165,20 +165,21 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 			"packer-%s-%d", c.PackerBuildName, interpolate.InitTime.Unix())
 	}
 
-	// Validates use of use_cd
+	// Validates the presence of the cloud-init data
+	// We either use a CD-ROM or HTTP to pass cloud-init data
 	if c.UseCD {
-		if c.CDFiles == nil {
+		if c.CDFiles == nil && c.CDContent == nil {
 			errs = packersdk.MultiErrorAppend(
-				errs, errors.New("use_cd is true, but cd_files is not set"))
+				errs, errors.New("use_cd is true, but neither cd_files nor cd_content is set"))
 		}
 		if c.CDLabel != "cidata" {
 			errs = packersdk.MultiErrorAppend(
 				errs, errors.New("use_cd is true, but cd_label is not set to 'cidata'"))
 		}
 	} else {
-		if c.HTTPDir == "" {
+		if c.HTTPDir == "" && c.HTTPContent == nil {
 			errs = packersdk.MultiErrorAppend(
-				errs, errors.New("use_cd is false, but http_directory is not set"))
+				errs, errors.New("use_cd is false, but neither http_directory nor http_content is set"))
 		}
 	}
 
