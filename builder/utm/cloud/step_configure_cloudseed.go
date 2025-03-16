@@ -98,9 +98,10 @@ func (s *stepConfigureCloudSeed) attachCloudInitISO(ctx context.Context, state m
 
 func (s *stepConfigureCloudSeed) configureCloudInitHTTP(ctx context.Context, state multistep.StateBag, driver utmcommon.Driver, ui packersdk.Ui, vmId string) multistep.StepAction {
 	// Get the host IP and HTTP port
-	// hostIP := state.Get("http_ip").(string)
-	// TODO: Get Host IP automatically from Mac's Shared_Network_Address
-	hostIP := "192.168.75.1"
+	hostIP := state.Get("http_ip").(string)
+	// If VM does not have an IP for emulated VLAN, we need to use the gateway IP of vmnet
+	// TODO: Get Host IP automatically from Mac's Shared_Network_Address,
+	// Ex: "192.168.x.x"
 	httpPort := state.Get("http_port").(int)
 
 	// Add Qemu args to send cloud init seed file
