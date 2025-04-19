@@ -21,6 +21,7 @@ type StepCreateVM struct {
 	VMName         string
 	VMBackend      string
 	VMArch         string
+	VMIcon         string
 	HWConfig       HWConfig
 	UEFIBoot       bool
 	Hypervisor     bool
@@ -38,6 +39,7 @@ func (s *StepCreateVM) Run(ctx context.Context, state multistep.StateBag) multis
 		"create_vm.applescript", "--name", s.VMName,
 		"--backend", s.VMBackend,
 		"--arch", s.VMArch,
+		"--icon", s.VMIcon,
 	}
 
 	ui.Say("Creating virtual machine...")
