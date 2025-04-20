@@ -106,6 +106,11 @@ necessary for this build to succeed and can be found further down the page.
   }
   ```
 
+- `display_hardware_type` (string) - The display hardware type to use. This is used to attach the display
+  device to the VM (for debugging or packaging). Some hardware types
+  include "virtio-gpu-device", "virtio-rambfb", "virtio-rambfb-gl" etc.
+  No display device is attached by default.
+
 - `disk_size` (uint) - The size, in megabytes, of the hard disk to create for the VM. By
   default, this is 40000 (about 40 GB).
 
@@ -159,6 +164,8 @@ necessary for this build to succeed and can be found further down the page.
   apple : Apple Virtualization.framework backend.
   qemu : QEMU backend.
   By default, this is qemu.
+
+- `vm_icon` (string) - UTM VM icon.
 
 - `vm_name` (string) - This is the name of the utm file for the new virtual machine, without
   the file extension. By default this is packer-BUILDNAME, where
