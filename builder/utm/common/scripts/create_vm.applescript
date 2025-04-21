@@ -8,6 +8,7 @@ on run argv
     set vmName to ""
     set vmBackend to ""
     set vmArch to ""
+    set vmIcon to ""
 
     -- Parse arguments
     repeat with i from 1 to (count argv)
@@ -18,6 +19,8 @@ on run argv
             set vmBackend to item (i + 1) of argv as string
         else if currentArg is "--arch" then
             set vmArch to item (i + 1) of argv
+        else if currentArg is "--icon" then
+            set vmIcon to item (i + 1) of argv
         end if
     end repeat
 
@@ -35,6 +38,13 @@ on run argv
       -- Remove all drives to have an empty VM
       set config to configuration of vm
       set drives of config to {}
+
+      -- Set the VM icon if provided
+      if vmIcon is not "" then
+          set icon of config to vmIcon
+      end if
+
+      -- Update the VM configuration
       update configuration of vm with config
 
       -- Return the ID of the new VM

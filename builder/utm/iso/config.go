@@ -86,6 +86,11 @@ type Config struct {
 	// }
 	// ```
 	BootSteps [][]string `mapstructure:"boot_steps" required:"false"`
+	// The display hardware type to use. This is used to attach the display
+	// device to the VM (for debugging or packaging). Some hardware types
+	// include "virtio-gpu-device", "virtio-rambfb", "virtio-rambfb-gl" etc.
+	// No display device is attached by default.
+	DisplayHardwareType string `mapstructure:"display_hardware_type" required:"false"`
 	// The size, in megabytes, of the hard disk to create for the VM. By
 	// default, this is 40000 (about 40 GB).
 	DiskSize uint `mapstructure:"disk_size" required:"false"`
@@ -139,6 +144,8 @@ type Config struct {
 	// qemu : QEMU backend.
 	// By default, this is qemu.
 	VMBackend string `mapstructure:"vm_backend" required:"false"`
+	// UTM VM icon.
+	VMIcon string `mapstructure:"vm_icon" required:"false"`
 	// This is the name of the utm file for the new virtual machine, without
 	// the file extension. By default this is packer-BUILDNAME, where
 	// "BUILDNAME" is the name of the build.

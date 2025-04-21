@@ -78,6 +78,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			VMName:         b.config.VMName,
 			VMBackend:      b.config.VMBackend,
 			VMArch:         b.config.VMArch,
+			VMIcon:         b.config.VMIcon,
 			HWConfig:       b.config.HWConfig,
 			UEFIBoot:       b.config.UEFIBoot,
 			Hypervisor:     b.config.Hypervisor,

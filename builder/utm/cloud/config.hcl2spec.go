@@ -118,6 +118,7 @@ type FlatConfig struct {
 	UseCD                     *bool             `mapstructure:"use_cd" required:"false" cty:"use_cd" hcl:"use_cd"`
 	KeepRegistered            *bool             `mapstructure:"keep_registered" required:"false" cty:"keep_registered" hcl:"keep_registered"`
 	SkipExport                *bool             `mapstructure:"skip_export" required:"false" cty:"skip_export" hcl:"skip_export"`
+	VMIcon                    *string           `mapstructure:"vm_icon" required:"false" cty:"vm_icon" hcl:"vm_icon"`
 	VMArch                    *string           `mapstructure:"vm_arch" required:"false" cty:"vm_arch" hcl:"vm_arch"`
 	VMBackend                 *string           `mapstructure:"vm_backend" required:"false" cty:"vm_backend" hcl:"vm_backend"`
 	VMName                    *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
@@ -243,6 +244,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"use_cd":                       &hcldec.AttrSpec{Name: "use_cd", Type: cty.Bool, Required: false},
 		"keep_registered":              &hcldec.AttrSpec{Name: "keep_registered", Type: cty.Bool, Required: false},
 		"skip_export":                  &hcldec.AttrSpec{Name: "skip_export", Type: cty.Bool, Required: false},
+		"vm_icon":                      &hcldec.AttrSpec{Name: "vm_icon", Type: cty.String, Required: false},
 		"vm_arch":                      &hcldec.AttrSpec{Name: "vm_arch", Type: cty.String, Required: false},
 		"vm_backend":                   &hcldec.AttrSpec{Name: "vm_backend", Type: cty.String, Required: false},
 		"vm_name":                      &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},

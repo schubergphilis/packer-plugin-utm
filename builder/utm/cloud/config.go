@@ -83,6 +83,8 @@ type Config struct {
 	// if the build output is not the resultant image, but created inside the
 	// VM.
 	SkipExport bool `mapstructure:"skip_export" required:"false"`
+	// UTM VM icon.
+	VMIcon string `mapstructure:"vm_icon" required:"false"`
 	// QEMU system architecture of the virtual machine.
 	// For a QEMU virtual machine, you must specify the architecture
 	// Which is required in confirguration. By default, this is aarch64.

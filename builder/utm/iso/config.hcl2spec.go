@@ -120,6 +120,7 @@ type FlatConfig struct {
 	UEFIBoot                  *bool             `mapstructure:"uefi_boot" required:"false" cty:"uefi_boot" hcl:"uefi_boot"`
 	RTCLocalTime              *bool             `mapstructure:"rtc_local_time" required:"false" cty:"rtc_local_time" hcl:"rtc_local_time"`
 	BootSteps                 [][]string        `mapstructure:"boot_steps" required:"false" cty:"boot_steps" hcl:"boot_steps"`
+	DisplayHardwareType       *string           `mapstructure:"display_hardware_type" required:"false" cty:"display_hardware_type" hcl:"display_hardware_type"`
 	DiskSize                  *uint             `mapstructure:"disk_size" required:"false" cty:"disk_size" hcl:"disk_size"`
 	HardDriveInterface        *string           `mapstructure:"hard_drive_interface" required:"false" cty:"hard_drive_interface" hcl:"hard_drive_interface"`
 	ISOInterface              *string           `mapstructure:"iso_interface" required:"false" cty:"iso_interface" hcl:"iso_interface"`
@@ -132,6 +133,7 @@ type FlatConfig struct {
 	VNCPortMax                *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
 	VMArch                    *string           `mapstructure:"vm_arch" required:"false" cty:"vm_arch" hcl:"vm_arch"`
 	VMBackend                 *string           `mapstructure:"vm_backend" required:"false" cty:"vm_backend" hcl:"vm_backend"`
+	VMIcon                    *string           `mapstructure:"vm_icon" required:"false" cty:"vm_icon" hcl:"vm_icon"`
 	VMName                    *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 }
 
@@ -257,6 +259,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"uefi_boot":                    &hcldec.AttrSpec{Name: "uefi_boot", Type: cty.Bool, Required: false},
 		"rtc_local_time":               &hcldec.AttrSpec{Name: "rtc_local_time", Type: cty.Bool, Required: false},
 		"boot_steps":                   &hcldec.AttrSpec{Name: "boot_steps", Type: cty.List(cty.List(cty.String)), Required: false},
+		"display_hardware_type":        &hcldec.AttrSpec{Name: "display_hardware_type", Type: cty.String, Required: false},
 		"disk_size":                    &hcldec.AttrSpec{Name: "disk_size", Type: cty.Number, Required: false},
 		"hard_drive_interface":         &hcldec.AttrSpec{Name: "hard_drive_interface", Type: cty.String, Required: false},
 		"iso_interface":                &hcldec.AttrSpec{Name: "iso_interface", Type: cty.String, Required: false},
@@ -269,6 +272,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"vnc_port_max":                 &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},
 		"vm_arch":                      &hcldec.AttrSpec{Name: "vm_arch", Type: cty.String, Required: false},
 		"vm_backend":                   &hcldec.AttrSpec{Name: "vm_backend", Type: cty.String, Required: false},
+		"vm_icon":                      &hcldec.AttrSpec{Name: "vm_icon", Type: cty.String, Required: false},
 		"vm_name":                      &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 	}
 	return s
