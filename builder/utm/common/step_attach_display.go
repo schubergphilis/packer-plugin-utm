@@ -64,7 +64,9 @@ func (s *StepAttachDisplay) Cleanup(state multistep.StateBag) {
 	ui := state.Get("ui").(packersdk.Ui)
 	driver := state.Get("driver").(Driver)
 
-	_, ok := state.GetOk("detached_isos")
+	// Check if the detach command is already
+	// executed in the previous step
+	_, ok := state.GetOk("detached_displays")
 
 	if !ok {
 		ui.Say("Detaching displays...")
