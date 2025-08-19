@@ -4,6 +4,12 @@ to create custom images. For the full list of available features for this plugin
 
 ## Installation
 
+### Using Packer
+
+```
+packer plugins install github.com/naveenrajm7/utm v0.3.3
+```
+
 ### Using pre-built releases
 
 #### Using the `packer init` command
@@ -33,7 +39,7 @@ You can find pre-built binary releases of the plugin [here](https://github.com/n
 Once you have downloaded the latest archive corresponding to your target OS,
 uncompress it to retrieve the plugin binary file corresponding to your platform.
 To install the plugin, please follow the Packer documentation on
-[installing a plugin](https://developer.hashicorp.com/packer/docs/extending/plugins/#installing-plugins).
+[installing a plugin](https://developer.hashicorp.com/packer/docs/plugins/install.
 
 
 ### From Sources
@@ -43,7 +49,7 @@ locally and run the command `go build` from the root
 directory. Upon successful compilation, a `packer-plugin-utm` plugin
 binary file can be found in the root directory.
 To install the compiled plugin, please follow the official Packer documentation
-on [installing a plugin](https://developer.hashicorp.com/packer/docs/extending/plugins/#installing-plugins).
+on [installing a plugin](https://developer.hashicorp.com/packer/docs/plugins/install).
 
 
 ### Configuration
