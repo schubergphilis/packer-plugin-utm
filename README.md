@@ -4,6 +4,12 @@ to create custom images. For the full list of available features for this plugin
 
 ## Installation
 
+### Using Packer
+
+```
+packer plugins install github.com/naveenrajm7/utm v0.3.3
+```
+
 ### Using pre-built releases
 
 #### Using the `packer init` command
