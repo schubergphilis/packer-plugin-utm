@@ -39,7 +39,7 @@ You can find pre-built binary releases of the plugin [here](https://github.com/n
 Once you have downloaded the latest archive corresponding to your target OS,
 uncompress it to retrieve the plugin binary file corresponding to your platform.
 To install the plugin, please follow the Packer documentation on
-[installing a plugin](https://developer.hashicorp.com/packer/docs/plugins/install.
+[installing a plugin](https://developer.hashicorp.com/packer/docs/plugins/install).
 
 
 ### From Sources
