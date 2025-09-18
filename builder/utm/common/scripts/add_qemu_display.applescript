@@ -30,10 +30,8 @@ on run argv
     -- Get the updated display id
     set updatedConfig to configuration of vm
     set updatedDisplays to displays of updatedConfig
-    set updatedDisplay to item -1 of updatedDisplays
-    set updatedDisplayId to id of updatedDisplay
 
     -- return the new display id
-    return updatedDisplayId
+    return hardwareType
   end tell
 end run

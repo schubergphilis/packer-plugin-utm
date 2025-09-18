@@ -7,6 +7,7 @@ package common
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -72,12 +73,7 @@ func (c *GuestAdditionsConfig) Prepare(communicatorType string) []error {
 		GuestAdditionsModeUpload,
 	}
 
-	for _, mode := range validModes {
-		if c.GuestAdditionsMode == mode {
-			validMode = true
-			break
-		}
-	}
+	validMode = slices.Contains(validModes, c.GuestAdditionsMode)
 
 	if !validMode {
 		errs = append(errs,
