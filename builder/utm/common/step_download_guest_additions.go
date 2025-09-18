@@ -17,6 +17,7 @@ import (
 // UTM version to guest additions version map
 var additionsVersionMap = map[string]string{
 	"4.6.4": "0.229.2",
+	"4.7.4": "0.1.271",
 }
 
 type guestAdditionsUrlTemplate struct {
@@ -37,52 +38,89 @@ type StepDownloadGuestAdditions struct {
 }
 
 func (s *StepDownloadGuestAdditions) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
-	var action multistep.StepAction
 	driver := state.Get("driver").(Driver)
 	ui := state.Get("ui").(packersdk.Ui)
 
-	// If we've disabled guest additions, don't download
-	if s.GuestAdditionsMode == GuestAdditionsModeDisable {
+	if s.skipGuestAdditionsDownload() {
 		log.Println("Not downloading guest additions since it is disabled.")
 		return multistep.ActionContinue
 	}
 
-	// Get UTM version
-	version, err := driver.Version()
-	if err != nil {
-		state.Put("error", fmt.Errorf("error reading version for guest additions download: %s", err))
+	version, halt := s.fetchUTMVersion(state, driver)
+	if halt != nil {
 		return multistep.ActionHalt
 	}
 
+	url, checksumType, halt := s.prepareGuestAdditionsURL(state, driver, ui, version)
+	if halt != nil {
+		return multistep.ActionHalt
+	}
+
+	checksum, haltAction := s.prepareGuestAdditionsChecksum(ctx, state, checksumType, version)
+	if haltAction != multistep.ActionContinue {
+		return haltAction
+	}
+
+	return s.downloadGuestAdditions(ctx, state, url, checksum)
+}
+
+func (s *StepDownloadGuestAdditions) Cleanup(state multistep.StateBag) {}
+
+func (s *StepDownloadGuestAdditions) downloadAdditionsSHA256(
+	ctx context.Context,
+	state multistep.StateBag,
+	additionsVersion string,
+	additionsName string,
+) (string, multistep.StepAction) {
+	// UTM does not provide a SHA256 checksum for the guest additions
+	// See https://github.com/utmapp/qemu/releases/tag/v10.0.2-utm
+	// The checksum of latest version has been hardcoded.
+	// This is a temporary solution until UTM provides the checksum
+	// This is the SHA256 checksum of the guest additions for UTM 4.7.4
+	checksum := "65b6a69b392ee01dd314c10f3dad9ebbf9c4160be43f5f0dd6bb715944d9095b"
+
+	return checksum, multistep.ActionContinue
+}
+
+func (s *StepDownloadGuestAdditions) skipGuestAdditionsDownload() bool {
+	return s.GuestAdditionsMode == GuestAdditionsModeDisable
+}
+
+func (s *StepDownloadGuestAdditions) fetchUTMVersion(state multistep.StateBag, driver Driver) (string, error) {
+	version, err := driver.Version()
+	if err != nil {
+		state.Put("error", fmt.Errorf("error reading version for guest additions download: %s", err))
+		return "", err
+	}
 	if newVersion, ok := additionsVersionMap[version]; ok {
 		log.Printf("Rewriting guest additions version: %s to %s", version, newVersion)
 		version = newVersion
 	}
+	return version, nil
+}
 
-	additionsName := fmt.Sprintf("utm-guest-tools-%s.iso", "latest")
-
-	// Use provided version or get it from getutm.app
-	var checksum string
-
-	checksumType := "sha256"
-
-	// Initialize the template context so we can interpolate some variables..
+func (s *StepDownloadGuestAdditions) prepareGuestAdditionsURL(
+	state multistep.StateBag,
+	driver Driver,
+	ui packersdk.Ui,
+	version string,
+) (string, string, error) {
+	// Prepare the template context for interpolation
 	s.Ctx.Data = &guestAdditionsUrlTemplate{
 		Version: version,
 	}
 
-	// Interpolate any user-variables specified within the guest_additions_url
 	url, err := interpolate.Render(s.GuestAdditionsURL, &s.Ctx)
 	if err != nil {
-		err := fmt.Errorf("error preparing guest additions url: %s", err)
-		state.Put("error", err)
-		ui.Error(err.Error())
-		return multistep.ActionHalt
+		prepErr := fmt.Errorf("error preparing guest additions url: %s", err)
+		state.Put("error", prepErr)
+		ui.Error(prepErr.Error())
+		return "", "", prepErr
 	}
+	checksumType := "sha256"
 
-	// If this resulted in an empty url, then ask the driver about it.
+	// Fallback to driver or default remote URL if necessary
 	if url == "" {
-		log.Printf("guest_additions_url is blank; querying driver for iso.")
 		url, err = driver.GuestToolsIsoPath()
 
 		if err == nil {
@@ -90,34 +128,50 @@ func (s *StepDownloadGuestAdditions) Run(ctx context.Context, state multistep.St
 		} else {
 			ui.Error(err.Error())
 			url = fmt.Sprintf(
-				"https://getutm.app/downloads/%s", additionsName)
+				"https://getutm.app/downloads/%s", fmt.Sprintf("utm-guest-tools-%s.iso", "latest"))
 		}
 	}
 
-	// The driver couldn't even figure it out, so fail hard.
 	if url == "" {
-		err := fmt.Errorf("couldn't detect guest additions URL.\n" +
+		err := fmt.Errorf("could not detect guest additions URL.\n" +
 			"Please specify `guest_additions_url` manually")
 		state.Put("error", err)
 		ui.Error(err.Error())
-		return multistep.ActionHalt
+		return "", "", err
 	}
 
-	// Figure out a default checksum here
+	return url, checksumType, nil
+}
+
+func (s *StepDownloadGuestAdditions) prepareGuestAdditionsChecksum(
+	ctx context.Context,
+	state multistep.StateBag,
+	checksumType string,
+	version string,
+) (string, multistep.StepAction) {
+	var checksum string
+
 	if checksumType != "none" {
 		if s.GuestAdditionsSHA256 != "" {
 			checksum = s.GuestAdditionsSHA256
 		} else {
+			additionsName := fmt.Sprintf("utm-guest-tools-%s.iso", "latest")
+			var action multistep.StepAction
 			checksum, action = s.downloadAdditionsSHA256(ctx, state, version, additionsName)
 			if action != multistep.ActionContinue {
-				return action
+				return "", action
 			}
 		}
 	}
+	return checksum, multistep.ActionContinue
+}
 
-	log.Printf("Guest additions URL: %s", url)
-
-	// We're good, so let's go ahead and download this thing..
+func (s *StepDownloadGuestAdditions) downloadGuestAdditions(
+	ctx context.Context,
+	state multistep.StateBag,
+	url string,
+	checksum string,
+) multistep.StepAction {
 	downStep := &commonsteps.StepDownload{
 		Checksum:    checksum,
 		Description: "Guest additions",
@@ -125,20 +179,5 @@ func (s *StepDownloadGuestAdditions) Run(ctx context.Context, state multistep.St
 		Url:         []string{url},
 		Extension:   "iso",
 	}
-
 	return downStep.Run(ctx, state)
-}
-
-func (s *StepDownloadGuestAdditions) Cleanup(state multistep.StateBag) {}
-
-func (s *StepDownloadGuestAdditions) downloadAdditionsSHA256(ctx context.Context, state multistep.StateBag, additionsVersion string, additionsName string) (string, multistep.StepAction) {
-	// UTM does not provide a SHA256 checksum for the guest additions
-	// See https://github.com/utmapp/qemu/releases/tag/v9.1.2-utm
-	// For now , we hardcode the checksum of latest version
-	// This is a temporary solution until UTM provides the checksum
-	// This is the SHA256 checksum of the guest additions for UTM 4.6.4
-	checksum := "8d91c59b92e236588199b04c1f3744a91a8d493663f0cd733353beb5217ce297"
-
-	return checksum, multistep.ActionContinue
-
 }
