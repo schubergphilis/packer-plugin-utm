@@ -9,6 +9,7 @@ on run argv
   set vmId to item 1 of argv # UUID of the VM
   -- Parse the --hardware argument
   set hardwareType to item 3 of argv
+  set driverVersion to item 5 of argv
 
   tell application "UTM"
     -- Get the VM and its configuration
@@ -30,10 +31,14 @@ on run argv
     -- Get the updated display id
     set updatedConfig to configuration of vm
     set updatedDisplays to displays of updatedConfig
-    set updatedDisplay to item -1 of updatedDisplays
-    set updatedDisplayId to id of updatedDisplay
 
-    -- return the new display id
-    return updatedDisplayId
+    if driverVersion is "4_7" then
+        return hardwareType
+    else
+        set updatedDisplay to item -1 of updatedDisplays
+        set updatedDisplayId to id of updatedDisplay
+        -- return the new display id
+        return updatedDisplayId
+    end if
   end tell
 end run

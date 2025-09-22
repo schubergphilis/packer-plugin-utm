@@ -1,6 +1,10 @@
 package common
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 // Map of controller names to their corresponding enum codes
 var ControllerEnumMap = map[string]string{
@@ -23,4 +27,15 @@ func GetControllerEnumCode(controllerName string) (string, error) {
 		return "", fmt.Errorf("invalid controller name: %s", controllerName)
 	}
 	return code, nil
+}
+
+func MajorMinorDriverVersion(version string) string {
+	re := regexp.MustCompile(`^(\d+)\.(\d+)\.\d+$`)
+	matches := re.FindStringSubmatch(strings.TrimSpace(version))
+
+	if len(matches) == 3 {
+		return matches[1] + "_" + matches[2]
+	}
+
+	return version
 }

@@ -8,10 +8,8 @@ import (
 	"strings"
 )
 
-var (
-	//go:embed scripts/*
-	osascripts embed.FS
-)
+//go:embed scripts/*
+var osascripts embed.FS
 
 // A driver is able to talk to UTM and perform certain
 // operations with it. Some of the operations on here may seem overly
@@ -87,6 +85,8 @@ func NewDriver() (Driver, error) {
 		driver = &Utm45Driver{utmctlPath}
 	case "4.6":
 		driver = &Utm46Driver{Utm45Driver{utmctlPath}}
+	case "4.7":
+		driver = &Utm47Driver{Utm46Driver{Utm45Driver{utmctlPath}}}
 	default:
 		log.Fatalf("Unsupported UTM version: %s", version)
 	}

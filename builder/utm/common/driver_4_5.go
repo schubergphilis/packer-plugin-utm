@@ -207,7 +207,7 @@ func (d *Utm45Driver) Version() (string, error) {
 	}
 
 	versionOutput := strings.TrimSpace(stdout.String())
-	log.Printf("UTM version output : %s", versionOutput)
+	log.Printf("UTM version output: %s", versionOutput)
 
 	// Check if the output contains the error message
 	if strings.Contains(versionOutput, "get application") {
@@ -222,5 +222,4 @@ func (d *Utm45Driver) Version() (string, error) {
 
 	log.Printf("UTM version: %s", matches[1])
 	return matches[1], nil
-
 }

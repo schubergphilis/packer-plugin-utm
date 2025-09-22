@@ -20,21 +20,34 @@ func (s *StepAttachDisplay) Run(ctx context.Context, state multistep.StateBag) m
 	driver := state.Get("driver").(Driver)
 	vmId := state.Get("vmId").(string)
 
+	driverVersion, err := driver.Version()
+	if err != nil {
+		err := fmt.Errorf("error getting driver version from state bag: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
+
+	majorMinorDriverVersion := MajorMinorDriverVersion(driverVersion)
+
 	// Check if HardwareType is empty
 	if s.HardwareType == "" {
 		ui.Say("No hardware type specified for display. Skipping display attachment.")
 		return multistep.ActionContinue
 	}
 
-	ui.Say(fmt.Sprintf("Attaching display with hardware type '%s'...", s.HardwareType))
+	ui.Say(fmt.Sprintf("Attaching display with hardware type '%s' for majorMinorDriverVersion '%s'...",
+		s.HardwareType,
+		majorMinorDriverVersion))
 
 	// Attach the display
 	command := []string{
 		"add_qemu_display.applescript", vmId,
 		"--hardware", s.HardwareType,
+		"--driver-version", majorMinorDriverVersion,
 	}
 
-	_, err := driver.ExecuteOsaScript(command...)
+	_, err = driver.ExecuteOsaScript(command...)
 	if err != nil {
 		err := fmt.Errorf("error attaching display: %s", err)
 		state.Put("error", err)
